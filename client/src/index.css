@@ -13,3 +13,6 @@
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   background: #D1D5DB;
 }
+
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }

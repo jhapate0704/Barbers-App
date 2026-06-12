@@ -29,23 +29,28 @@ const SalonCard = ({ salon, onBook }) => {
   }, [images.length, intervalSpeed]);
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-200 relative flex flex-col">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-200 relative flex flex-col h-full">
       {/* Salon Cover Carousel */}
       <div style={{ height: 160, width: '100%', background: 'linear-gradient(135deg, #f5f3ff, #eef2f6)', position: 'relative', overflow: 'hidden' }}>
         {images.length > 0 ? (
-          <img 
-            src={images[currentSlide]} 
-            alt={`${salon.name}`} 
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'cover', 
-              position: 'absolute', 
-              top: 0, 
-              left: 0, 
-              transition: 'opacity 0.8s ease-in-out' 
-            }} 
-          />
+          images.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={`${salon.name} image ${idx}`} 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover', 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                opacity: currentSlide === idx ? 1 : 0,
+                transform: currentSlide === idx ? 'scale(1)' : 'scale(1.05)',
+                transition: 'opacity 0.8s ease-in-out, transform 0.8s ease-in-out' 
+              }} 
+            />
+          ))
         ) : (
           <div className="text-indigo-400 flex flex-col items-center justify-center h-full gap-2">
             <Scissors size={34} />
