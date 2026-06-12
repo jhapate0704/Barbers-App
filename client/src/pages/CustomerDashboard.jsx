@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import {
   Scissors, Calendar, Clock, MapPin, ArrowLeft, LogOut, CheckCircle,
   XCircle, AlertCircle, ShoppingBag, Landmark, Activity, RefreshCw, Star,
-  Settings, User, Lock, Eye, EyeOff, HelpCircle, Shield
+  Settings, User, Lock, Eye, EyeOff, HelpCircle, Shield, X, Menu
 } from 'lucide-react';
 
 const API_BASE = "http://localhost:5000/api";
@@ -59,6 +59,7 @@ export default function CustomerDashboard() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -353,7 +354,7 @@ export default function CustomerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen text-slate-300 font-sans pb-16 relative overflow-hidden" style={{ background: '#07060f' }}>
+      <div className="min-h-screen text-slate-700 font-sans pb-16 relative overflow-hidden" style={{ background: '#f8fafc' }}>
         <style>{`
           @keyframes spin{to{transform:rotate(360deg)}}
           @keyframes pulse{0%,100%{opacity:0.6} 50%{opacity:0.3}}
@@ -366,7 +367,7 @@ export default function CustomerDashboard() {
         {/* Dashboard Mockup Grid Skeleton */}
         <div className="max-w-6xl mx-auto px-5 pt-8 relative z-1 space-y-8 select-none pointer-events-none opacity-25">
           {/* Header */}
-          <div className="flex justify-between items-center pb-7 border-b border-white/[0.06]">
+          <div className="flex justify-between items-center pb-7 border-b border-indigo-100/60">
             <div className="space-y-3">
               <div className="h-4 bg-white/5 rounded-full w-28 skeleton-pulse" />
               <div className="h-8 bg-white/5 rounded-full w-56 skeleton-pulse" />
@@ -377,7 +378,7 @@ export default function CustomerDashboard() {
           {/* Stats Cards Mockup */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-white/5 border border-white/[0.05] rounded-3xl skeleton-pulse" />
+              <div key={i} className="h-24 bg-white/5 border border-indigo-100/60 rounded-3xl skeleton-pulse" />
             ))}
           </div>
 
@@ -385,68 +386,78 @@ export default function CustomerDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="h-6 bg-white/5 rounded-full w-40 skeleton-pulse" />
-              <div className="h-56 bg-white/5 border border-white/[0.05] rounded-3xl skeleton-pulse" />
+              <div className="h-56 bg-white/5 border border-indigo-100/60 rounded-3xl skeleton-pulse" />
             </div>
             <div className="space-y-6">
               <div className="h-6 bg-white/5 rounded-full w-24 skeleton-pulse" />
-              <div className="h-72 bg-white/5 border border-white/[0.05] rounded-3xl skeleton-pulse" />
+              <div className="h-72 bg-white/5 border border-indigo-100/60 rounded-3xl skeleton-pulse" />
             </div>
           </div>
         </div>
 
         {/* Loader Overlaid in center */}
-        <div className="absolute inset-0 bg-[#07060f]/80 backdrop-blur-md flex flex-col items-center justify-center gap-5 z-10">
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-5 z-10">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-2 border-violet-500/20 border-t-violet-400 animate-[spin_1s_linear_infinite]" />
             <div className="absolute inset-2 rounded-full bg-linear-to-br from-violet-500/30 to-fuchsia-500/20 backdrop-blur-sm flex items-center justify-center">
               <Scissors size={20} className="text-violet-300" />
             </div>
           </div>
-          <p className="text-slate-400 text-[11px] tracking-[0.3em] uppercase font-semibold">Preparing your dashboard</p>
+          <p className="text-slate-500 text-[11px] tracking-[0.3em] uppercase font-semibold">Preparing your dashboard</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans pb-16 relative overflow-hidden" style={{ background: '#07060f', fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
+    <div className="min-h-screen text-slate-800 font-sans pb-16 relative overflow-hidden" style={{ background: '#f8fafc', fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; background: #07060f; }
-        .glass { background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .glass-strong { background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); backdrop-filter: blur(24px); }
+        body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; background: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(99, 102, 241, 0.15); box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.08); }
+        .glass-strong { background: #ffffff; backdrop-filter: blur(24px); border: 1px solid rgba(99, 102, 241, 0.2); box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.12); }
         .card-hover { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s; }
         .card-hover:hover { transform: translateY(-2px); border-color: rgba(167,139,250,0.35); box-shadow: 0 18px 50px -20px rgba(124,58,237,0.45); }
         .btn-primary { background: linear-gradient(135deg,#8b5cf6 0%,#d946ef 100%); box-shadow: 0 10px 30px -10px rgba(139,92,246,.6), inset 0 1px 0 rgba(255,255,255,.18); transition: all .25s; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 36px -10px rgba(139,92,246,.75), inset 0 1px 0 rgba(255,255,255,.22); }
         .btn-primary:active { transform: translateY(0) scale(.98); }
-        .chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); transition: all .2s; }
-        .chip:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); }
+        .chip { background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.1); transition: all .2s; }
+        .chip:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); }
         .accent-bar { background: linear-gradient(180deg,#a78bfa 0%,#d946ef 100%); box-shadow: 0 0 20px rgba(167,139,250,.6); }
         @keyframes float-slow { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-15px)} }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-        .shimmer-text { background: linear-gradient(90deg,#fff 0%,#c4b5fd 50%,#fff 100%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 4s linear infinite; }
+        .shimmer-text { background: linear-gradient(90deg, #1e293b 0%, #6366f1 50%, #1e293b 100%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 4s linear infinite; }
         .bg-orbs::before, .bg-orbs::after { content:''; position:fixed; border-radius:50%; filter: blur(110px); pointer-events:none; z-index:0; animation: float-slow 12s ease-in-out infinite; }
         .bg-orbs::before { width:520px; height:520px; background: radial-gradient(circle, rgba(139,92,246,.22), transparent 70%); top:-180px; left:-120px; }
         .bg-orbs::after { width:480px; height:480px; background: radial-gradient(circle, rgba(217,70,239,.18), transparent 70%); bottom:-160px; right:-140px; animation-delay: -6s; }
       `}</style>
 
       <div className="bg-orbs" />
+      <div className="absolute inset-0 bg-linear-to-br from-indigo-50/60 via-white to-purple-50/40 pointer-events-none -z-10" />
 
       <div className="max-w-6xl mx-auto px-5 pt-8 relative" style={{ zIndex: 1 }}>
 
         {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 pb-7 mb-10 border-b border-white/[0.06]">
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="group flex items-center text-slate-500 hover:text-violet-300 transition-all text-xs font-semibold tracking-wide w-fit"
-            >
-              <ArrowLeft size={14} className="mr-1.5 group-hover:-translate-x-0.5 transition-transform" /> BACK TO MARKETPLACE
-            </button>
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 pb-7 mb-10 border-b border-indigo-100/60">
+          <div className="flex flex-col gap-3 w-full">
+            <div className="flex justify-between items-center w-full">
+              <button
+                onClick={() => navigate('/')}
+                className="group flex items-center text-slate-500 hover:text-violet-500 transition-all text-xs font-semibold tracking-wide w-fit"
+              >
+                <ArrowLeft size={14} className="mr-1.5 group-hover:-translate-x-0.5 transition-transform" /> BACK TO MARKETPLACE
+              </button>
+              
+              <button 
+                onClick={() => setMobileSidebarOpen(true)}
+                className="md:hidden flex items-center justify-center p-2 bg-white border border-indigo-100 rounded-xl shadow-sm text-slate-700 active:scale-95 transition-all"
+              >
+                <Menu size={20} />
+              </button>
+            </div>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/30 ring-1 ring-white/10">
-                <span className="text-white font-bold text-lg">{customerName.charAt(0).toUpperCase()}</span>
+                <span className="text-slate-900 font-bold text-lg">{customerName.charAt(0).toUpperCase()}</span>
               </div>
               <div>
                 <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Welcome back</p>
@@ -457,10 +468,10 @@ export default function CustomerDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="hidden sm:flex items-center gap-2.5 w-full sm:w-auto">
             <button
               onClick={fetchBookings}
-              className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 hover:border-violet-400/40 text-slate-300 hover:text-white transition-all active:scale-95 text-xs font-semibold"
+              className="glass flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-100 hover:border-violet-400/40 text-slate-700 hover:text-slate-900 transition-all active:scale-95 text-xs font-semibold"
               title="Refresh"
             >
               <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
@@ -486,21 +497,21 @@ export default function CustomerDashboard() {
                   <span className="bg-linear-to-r from-violet-500/25 to-fuchsia-500/25 border border-violet-400/30 text-violet-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-[0.15em]">⚡ Early Slot</span>
                   <span className="text-xs text-violet-300 font-semibold">{b.salonId?.name}</span>
                 </div>
-                <h3 className="text-base font-bold text-white">Your chair is ready ahead of schedule</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Move your slot on <span className="text-white font-semibold">{b.appointmentDate && !isNaN(new Date(b.appointmentDate).getTime()) ? new Date(b.appointmentDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'N/A'}</span> for <span className="text-white font-semibold">{b.chairName}</span> to <span className="text-emerald-400 font-bold">{formatTo12Hr(b.proposedStartTime)}</span> – {formatTo12Hr(b.proposedEndTime)} (was {formatTo12Hr(b.startTime)})?
+                <h3 className="text-base font-bold text-slate-900">Your chair is ready ahead of schedule</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Move your slot on <span className="text-slate-900 font-semibold">{b.appointmentDate && !isNaN(new Date(b.appointmentDate).getTime()) ? new Date(b.appointmentDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'N/A'}</span> for <span className="text-slate-900 font-semibold">{b.chairName}</span> to <span className="text-emerald-400 font-bold">{formatTo12Hr(b.proposedStartTime)}</span> – {formatTo12Hr(b.proposedEndTime)} (was {formatTo12Hr(b.startTime)})?
                 </p>
               </div>
               <div className="flex items-center gap-2.5 shrink-0 w-full md:w-auto">
                 <button
                   onClick={() => handleRescheduleResponse(b._id, 'declined')}
-                  className="flex-1 md:flex-none text-xs font-semibold text-slate-300 hover:text-white px-4 py-2.5 rounded-xl chip transition-all"
+                  className="flex-1 md:flex-none text-xs font-semibold text-slate-700 hover:text-slate-900 px-4 py-2.5 rounded-xl chip transition-all"
                 >
                   Decline
                 </button>
                 <button
                   onClick={() => handleRescheduleResponse(b._id, 'accepted')}
-                  className="btn-primary flex-1 md:flex-none text-xs font-bold text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-1.5"
+                  className="btn-primary flex-1 md:flex-none text-xs font-bold text-slate-900 px-5 py-2.5 rounded-xl flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle size={14} /> Accept & Shift
                 </button>
@@ -516,62 +527,122 @@ export default function CustomerDashboard() {
             { label: 'Lifetime Investment', val: `₹${totalSpent.toLocaleString()}`, icon: Landmark, grad: 'from-emerald-400 to-teal-500', glow: 'rgba(16,185,129,.3)' },
             { label: 'Preferred Salon', val: preferredSalon(), icon: Scissors, grad: 'from-amber-400 to-orange-500', glow: 'rgba(245,158,11,.3)' }
           ].map((stat, i) => (
-            <div key={i} className="glass card-hover rounded-2xl p-5 flex items-center border border-white/[0.06] relative overflow-hidden">
+            <div key={i} className="glass card-hover rounded-2xl p-5 flex items-center border border-indigo-100/60 relative overflow-hidden">
               <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity" style={{ background: `radial-gradient(circle at top left, ${stat.glow}, transparent 70%)` }} />
               <div className={`relative p-3.5 bg-linear-to-br ${stat.grad} rounded-2xl mr-4 shadow-lg ring-1 ring-white/15`} style={{ boxShadow: `0 10px 30px -10px ${stat.glow}` }}>
-                <stat.icon size={20} className="text-white" />
+                <stat.icon size={20} className="text-slate-900" />
               </div>
               <div className="relative min-w-0">
                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-                <h3 className="text-xl font-bold text-white truncate max-w-[180px] sm:max-w-none">{stat.val}</h3>
+                <h3 className="text-xl font-bold text-slate-900 truncate max-w-[180px] sm:max-w-none">{stat.val}</h3>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-white/[0.08] mb-8 gap-2 overflow-x-auto pb-px">
-          <button
-            onClick={() => setActiveTab('bookings')}
-            className={`flex items-center gap-2 px-5 py-3 text-xs md:text-sm font-bold tracking-wide transition-all border-b-2 cursor-pointer ${
-              activeTab === 'bookings'
-                ? 'border-violet-500 text-white bg-white/[0.02]'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.01]'
-            } rounded-t-xl`}
-          >
-            <Activity size={14} className={activeTab === 'bookings' ? 'text-violet-400' : 'text-slate-500'} />
-            Upcoming Bookings ({activeBookings.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-5 py-3 text-xs md:text-sm font-bold tracking-wide transition-all border-b-2 cursor-pointer ${
-              activeTab === 'history'
-                ? 'border-violet-500 text-white bg-white/[0.02]'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.01]'
-            } rounded-t-xl`}
-          >
-            <Calendar size={14} className={activeTab === 'history' ? 'text-violet-400' : 'text-slate-500'} />
-            Booking History ({pastBookings.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-2 px-5 py-3 text-xs md:text-sm font-bold tracking-wide transition-all border-b-2 cursor-pointer ${
-              activeTab === 'profile'
-                ? 'border-violet-500 text-white bg-white/[0.02]'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.01]'
-            } rounded-t-xl`}
-          >
-            <Settings size={14} className={activeTab === 'profile' ? 'text-violet-400' : 'text-slate-500'} />
-            Settings & Profile
-          </button>
-        </div>
+        <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
+          {/* Mobile Overlay */}
+          {mobileSidebarOpen && (
+            <div 
+              className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100]"
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+          )}
 
-        {/* Tab Content */}
-        <div className="transition-all duration-300 ease-in-out">
+          {/* Navigation Sidebar */}
+          <div className={`flex flex-col gap-2 shrink-0 hide-scroll transition-transform duration-300 ease-in-out z-[101]
+            fixed top-0 left-0 h-full w-64 bg-white shadow-2xl p-5 overflow-y-auto
+            ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:relative md:translate-x-0 md:bg-transparent md:shadow-none md:p-0 md:h-auto md:w-64 md:z-auto md:flex`}>
+
+            <div className="md:hidden flex items-center justify-between mb-4 pb-4 border-b border-indigo-100">
+              <span className="font-black text-slate-900 text-lg">Menu</span>
+              <button 
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-1.5 bg-slate-100 text-slate-500 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => { setActiveTab('bookings'); setMobileSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0 cursor-pointer shrink-0 ${
+                activeTab === 'bookings'
+                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/80 shadow-xs rounded-xl md:rounded-r-xl md:rounded-l-none'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl md:rounded-r-xl md:rounded-l-none'
+              }`}
+            >
+              <Activity size={16} className={activeTab === 'bookings' ? 'text-indigo-500' : 'text-slate-400'} />
+              Upcoming Bookings ({activeBookings.length})
+            </button>
+            <button
+              onClick={() => { setActiveTab('history'); setMobileSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0 cursor-pointer shrink-0 ${
+                activeTab === 'history'
+                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/80 shadow-xs rounded-xl md:rounded-r-xl md:rounded-l-none'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl md:rounded-r-xl md:rounded-l-none'
+              }`}
+            >
+              <Calendar size={16} className={activeTab === 'history' ? 'text-indigo-500' : 'text-slate-400'} />
+              Booking History ({pastBookings.length})
+            </button>
+
+            <div className="hidden md:block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-4 mb-1 px-5">Settings & Profile</div>
+            
+            <button
+              onClick={() => { setMobileSidebarOpen(false); setActiveTab('profile'); setActiveProfileSection('my-profile'); setProfileError(''); setProfileSuccess(''); }}
+              className={`flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0 cursor-pointer shrink-0 ${
+                activeTab === 'profile' && activeProfileSection === 'my-profile'
+                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/80 shadow-xs rounded-xl md:rounded-r-xl md:rounded-l-none'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl md:rounded-r-xl md:rounded-l-none'
+              }`}
+            >
+              <User size={16} className={activeTab === 'profile' && activeProfileSection === 'my-profile' ? 'text-indigo-500' : 'text-slate-400'} />
+              My Profile
+            </button>
+
+            <button
+              onClick={() => { setMobileSidebarOpen(false); setActiveTab('profile'); setActiveProfileSection('personal-settings'); setProfileError(''); setProfileSuccess(''); }}
+              className={`flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0 cursor-pointer shrink-0 ${
+                activeTab === 'profile' && activeProfileSection === 'personal-settings'
+                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/80 shadow-xs rounded-xl md:rounded-r-xl md:rounded-l-none'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl md:rounded-r-xl md:rounded-l-none'
+              }`}
+            >
+              <Shield size={16} className={activeTab === 'profile' && activeProfileSection === 'personal-settings' ? 'text-indigo-500' : 'text-slate-400'} />
+              Personal Settings
+            </button>
+
+            <button
+              onClick={() => { setMobileSidebarOpen(false); setActiveTab('profile'); setActiveProfileSection('help-support'); setProfileError(''); setProfileSuccess(''); }}
+              className={`flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 md:border-t-0 md:border-r-0 md:border-b-0 cursor-pointer shrink-0 ${
+                activeTab === 'profile' && activeProfileSection === 'help-support'
+                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/80 shadow-xs rounded-xl md:rounded-r-xl md:rounded-l-none'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl md:rounded-r-xl md:rounded-l-none'
+              }`}
+            >
+              <HelpCircle size={16} className={activeTab === 'profile' && activeProfileSection === 'help-support' ? 'text-indigo-500' : 'text-slate-400'} />
+              Help & Support
+            </button>
+
+            <div className="hidden md:block h-px w-full bg-indigo-100/50 my-2" />
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-5 py-3.5 text-xs md:text-sm font-bold tracking-wide transition-all border md:border-l-4 border-transparent text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl md:rounded-r-xl md:rounded-l-none cursor-pointer shrink-0 md:mt-2"
+            >
+              <LogOut size={16} />
+              Log Out
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 transition-all duration-300 ease-in-out w-full min-w-0">
           {activeTab === 'bookings' && (
             <div className="space-y-5 max-w-4xl animate-[fadeUp_0.3s_ease]">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2.5">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
                   <span className="w-7 h-7 rounded-lg bg-violet-500/15 border border-violet-400/25 flex items-center justify-center">
                     <Activity size={14} className="text-violet-300" />
                   </span>
@@ -581,15 +652,15 @@ export default function CustomerDashboard() {
               </div>
 
               {activeBookings.length === 0 ? (
-                <div className="glass rounded-3xl p-10 text-center flex flex-col items-center justify-center border border-white/[0.06]">
+                <div className="glass rounded-3xl p-10 text-center flex flex-col items-center justify-center border border-indigo-100/60">
                   <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-violet-500/15 to-fuchsia-500/10 border border-violet-400/20 flex items-center justify-center mb-4">
                     <Scissors size={28} className="text-violet-300" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-200 mb-1.5">No appointments scheduled</h3>
+                  <h3 className="text-base font-bold text-slate-800 mb-1.5">No appointments scheduled</h3>
                   <p className="text-xs text-slate-500 mb-6 max-w-xs">Looking sharp takes planning. Discover a salon near you and lock in your slot.</p>
                   <button
                     onClick={() => navigate('/')}
-                    className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-sm cursor-pointer"
+                    className="btn-primary text-slate-900 font-bold px-6 py-3 rounded-xl text-sm cursor-pointer"
                   >
                     Browse Salons
                   </button>
@@ -612,15 +683,15 @@ export default function CustomerDashboard() {
                     return (
                       <div
                         key={booking._id}
-                        className="glass card-hover rounded-3xl p-5 sm:p-6 border border-white/[0.06] relative overflow-hidden"
+                        className="glass card-hover rounded-3xl p-5 sm:p-6 border border-indigo-100/60 relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-1 h-full accent-bar" />
                         <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
 
                         <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4 mb-5">
                           <div className="min-w-0">
-                            <h3 className="text-lg font-bold text-white tracking-tight">{booking.salonId?.name || 'Local Salon'}</h3>
-                            <div className="flex items-center text-slate-400 text-xs mt-1.5">
+                            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{booking.salonId?.name || 'Local Salon'}</h3>
+                            <div className="flex items-center text-slate-500 text-xs mt-1.5">
                               <MapPin size={12} className="mr-1.5 text-violet-400 shrink-0" />
                               <span className="truncate">{booking.salonId?.address || 'Location Address'}</span>
                             </div>
@@ -628,17 +699,17 @@ export default function CustomerDashboard() {
 
                           <div className="glass-strong border border-violet-400/20 px-3.5 py-2 rounded-xl text-center sm:text-right shrink-0">
                             <span className="text-[9px] text-violet-300 font-bold block uppercase tracking-[0.15em]">Chair / Barber</span>
-                            <span className="text-xs text-white font-bold">{booking.chairName}</span>
+                            <span className="text-xs text-slate-900 font-bold">{booking.chairName}</span>
                           </div>
                         </div>
 
-                        <div className="relative bg-black/20 border border-white/[0.05] rounded-2xl p-4 mb-4">
+                        <div className="relative bg-indigo-50/50 border border-indigo-100/60 rounded-2xl p-4 mb-4">
                           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em] block mb-2.5">Booked Services</span>
                           <div className="flex flex-wrap gap-2">
                             {(booking.services || []).map((service, idx) => (
                               <span
                                 key={idx}
-                                className="chip text-xs px-3 py-1.5 rounded-lg text-slate-200 font-medium"
+                                className="chip text-xs px-3 py-1.5 rounded-lg text-slate-800 font-medium"
                               >
                                 {service.name} <span className="text-violet-300 font-bold ml-0.5">₹{service.price}</span>
                               </span>
@@ -648,11 +719,11 @@ export default function CustomerDashboard() {
 
                         <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
                           <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center text-xs text-slate-300 font-medium">
+                            <div className="flex items-center text-xs text-slate-700 font-medium">
                               <Calendar size={14} className="mr-1.5 text-violet-400" />
                               <span>{formattedDate}</span>
                             </div>
-                            <div className="flex items-center text-xs text-slate-300 font-medium">
+                            <div className="flex items-center text-xs text-slate-700 font-medium">
                               <Clock size={14} className="mr-1.5 text-violet-400" />
                               <span>{formatTo12Hr(booking.startTime)} – {formatTo12Hr(booking.endTime)}</span>
                             </div>
@@ -672,14 +743,14 @@ export default function CustomerDashboard() {
                           const isToday = new Date(booking.appointmentDate).toDateString() === new Date().toDateString();
                           
                           return (
-                            <div className="relative mt-5 pt-4 border-t border-white/[0.05] space-y-4">
+                            <div className="relative mt-5 pt-4 border-t border-indigo-100/60 space-y-4">
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <span className="relative flex h-2.5 w-2.5">
                                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${isToday ? '' : 'hidden'}`}></span>
                                     <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isToday ? 'bg-emerald-500' : 'bg-slate-600'}`}></span>
                                   </span>
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">
                                     {isToday ? 'Live Status' : 'Queue Status'}
                                   </span>
                                 </div>
@@ -689,7 +760,7 @@ export default function CustomerDashboard() {
                                       queueInfo.position === 1 ? (
                                         <span className="text-xs font-bold text-fuchsia-300 animate-pulse">💈 Next Up — Head to shop!</span>
                                       ) : (
-                                        <span className="text-xs text-slate-400 font-semibold">
+                                        <span className="text-xs text-slate-500 font-semibold">
                                           Position <span className="text-indigo-400 font-bold">#{queueInfo.position}</span> ({queueInfo.peopleAhead} ahead)
                                         </span>
                                       )
@@ -724,7 +795,7 @@ export default function CustomerDashboard() {
                                           ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300 animate-pulse shadow-lg shadow-indigo-500/10'
                                           : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5'
                                         : 'bg-indigo-600/10 border-indigo-500/30 text-indigo-300 animate-pulse'
-                                      : 'bg-white/5 border-white/10 text-slate-600'
+                                      : 'bg-white/5 border-indigo-100 text-slate-600'
                                   }`}>
                                     {isToday 
                                       ? hasQueueInfo 
@@ -759,7 +830,7 @@ export default function CustomerDashboard() {
                                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
                                     isToday && hasQueueInfo && queueInfo.position === 1
                                       ? 'bg-linear-to-br from-fuchsia-500/30 to-pink-500/20 border-fuchsia-400 text-fuchsia-300 animate-bounce shadow-lg shadow-fuchsia-500/20'
-                                      : 'bg-white/5 border-white/10 text-slate-600'
+                                      : 'bg-white/5 border-indigo-100 text-slate-600'
                                   }`}>
                                     💈
                                   </div>
@@ -781,7 +852,7 @@ export default function CustomerDashboard() {
 
           {activeTab === 'history' && (
             <div className="space-y-5 max-w-4xl animate-[fadeUp_0.3s_ease]">
-              <h2 className="text-base font-bold text-white flex items-center gap-2.5">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-lg bg-fuchsia-500/15 border border-fuchsia-400/25 flex items-center justify-center">
                   <Calendar size={14} className="text-fuchsia-300" />
                 </span>
@@ -790,10 +861,10 @@ export default function CustomerDashboard() {
               </h2>
 
               {/* Filters Row */}
-              <div className="glass border border-white/[0.04] rounded-2xl p-4 space-y-3">
+              <div className="glass border border-indigo-100/60 rounded-2xl p-4 space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label htmlFor="history-search-input" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Search History</label>
+                    <label htmlFor="history-search-input" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Search History</label>
                     <input
                       id="history-search-input"
                       name="historySearch"
@@ -801,18 +872,18 @@ export default function CustomerDashboard() {
                       value={historySearchQuery}
                       onChange={(e) => setHistorySearchQuery(e.target.value)}
                       placeholder="Search Salon or Service..."
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-white border border-indigo-100/60 rounded-xl px-3.5 py-2 text-xs text-slate-800 outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="history-date-filter" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filter by Date</label>
+                    <label htmlFor="history-date-filter" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Filter by Date</label>
                     <input
                       id="history-date-filter"
                       name="historyDate"
                       type="date"
                       value={historyDateFilter}
                       onChange={(e) => setHistoryDateFilter(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-white border border-indigo-100/60 rounded-xl px-3.5 py-2 text-xs text-slate-800 outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
                 </div>
@@ -829,7 +900,7 @@ export default function CustomerDashboard() {
               </div>
 
               {pastBookings.length === 0 ? (
-                <div className="glass rounded-2xl p-8 text-center text-slate-500 border border-white/[0.05] text-xs font-medium">
+                <div className="glass rounded-2xl p-8 text-center text-slate-500 border border-indigo-100/60 text-xs font-medium">
                   No past transactions recorded yet.
                 </div>
               ) : (
@@ -849,11 +920,11 @@ export default function CustomerDashboard() {
                     return (
                       <div
                         key={b._id}
-                        className="glass card-hover rounded-2xl p-4 flex flex-col justify-between gap-3 border border-white/[0.05]"
+                        className="glass card-hover rounded-2xl p-4 flex flex-col justify-between gap-3 border border-indigo-100/60"
                       >
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0">
-                            <h3 className="text-sm font-bold text-white truncate">{b.salonId?.name || 'Local Salon'}</h3>
+                            <h3 className="text-sm font-bold text-slate-900 truncate">{b.salonId?.name || 'Local Salon'}</h3>
                             <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">{formattedDate} · {formatTo12Hr(b.startTime)}</span>
                           </div>
 
@@ -870,15 +941,15 @@ export default function CustomerDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center text-xs border-t border-white/[0.04] pt-2.5 gap-3">
-                          <span className="text-slate-400 font-medium truncate">
+                        <div className="flex justify-between items-center text-xs border-t border-indigo-100/60 pt-2.5 gap-3">
+                          <span className="text-slate-500 font-medium truncate">
                             {(b.services || []).map(s => s.name).join(', ')}
                           </span>
                           <span className="font-bold text-violet-300 shrink-0">₹{sumCost}</span>
                         </div>
 
                         {b.status === 'completed' && (
-                          <div className="flex justify-end pt-2.5 border-t border-white/[0.04]">
+                          <div className="flex justify-end pt-2.5 border-t border-indigo-100/60">
                             <button
                               onClick={() => openRateModal(b)}
                               className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/[0.08] hover:bg-amber-500/15 border border-amber-400/20 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
@@ -896,43 +967,7 @@ export default function CustomerDashboard() {
           )}
 
           {activeTab === 'profile' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-[fadeUp_0.3s_ease]">
-              {/* Profile Sidebar */}
-              <div className="md:col-span-1 flex flex-col gap-2.5">
-                {[
-                  { id: 'my-profile', label: 'My Profile', icon: User },
-                  { id: 'personal-settings', label: 'Personal Settings', icon: Shield },
-                  { id: 'help-support', label: 'Help & Support', icon: HelpCircle }
-                ].map(sec => (
-                  <button
-                    key={sec.id}
-                    onClick={() => {
-                      setActiveProfileSection(sec.id);
-                      setProfileError('');
-                      setProfileSuccess('');
-                    }}
-                    className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border text-xs font-bold transition-all text-left cursor-pointer ${
-                      activeProfileSection === sec.id
-                        ? 'bg-violet-600/20 border-violet-500/50 text-white shadow-lg shadow-violet-500/5'
-                        : 'bg-white/[0.02] border-white/[0.05] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <sec.icon size={15} className={activeProfileSection === sec.id ? 'text-violet-400' : 'text-slate-500'} />
-                    {sec.label}
-                  </button>
-                ))}
-                
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl bg-red-500/[0.04] border border-red-500/10 hover:border-red-500/30 text-red-300 hover:text-red-200 text-xs font-bold transition-all text-left cursor-pointer mt-4"
-                >
-                  <LogOut size={15} />
-                  Log Out
-                </button>
-              </div>
-
-              {/* Profile Detail Content Area */}
-              <div className="md:col-span-3 glass-strong border border-white/[0.06] rounded-3xl p-6 md:p-8 relative">
+            <div className="bg-white border border-indigo-100/60 shadow-sm rounded-3xl p-6 md:p-8 relative animate-[fadeUp_0.3s_ease]">
                 {profileError && (
                   <div className="bg-red-500/[0.08] border border-red-500/25 text-red-300 p-3.5 rounded-xl mb-6 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle size={14} className="shrink-0" /> {profileError}
@@ -947,12 +982,12 @@ export default function CustomerDashboard() {
                 {activeProfileSection === 'my-profile' && (
                   <form onSubmit={handleSaveProfile} className="space-y-6">
                     <div>
-                      <h2 className="text-base font-bold text-white mb-1">My Profile</h2>
+                      <h2 className="text-base font-bold text-slate-900 mb-1">My Profile</h2>
                       <p className="text-xs text-slate-500">Manage your avatar details and grooming style preferences.</p>
                     </div>
 
                     {/* Avatar Picker */}
-                    <div className="flex flex-col sm:flex-row items-center gap-5 p-5 bg-white/[0.01] border border-white/[0.04] rounded-2xl">
+                    <div className="flex flex-col sm:flex-row items-center gap-5 p-5 bg-white border border-indigo-100/60 rounded-2xl">
                       <div className="relative group shrink-0">
                         {profileData.avatar ? (
                           <img
@@ -961,11 +996,11 @@ export default function CustomerDashboard() {
                             className="w-20 h-20 rounded-2xl object-cover ring-2 ring-violet-500/40"
                           />
                         ) : (
-                          <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg ring-2 ring-violet-500/20">
+                          <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-slate-900 font-extrabold text-2xl shadow-lg ring-2 ring-violet-500/20">
                             {profileData.name ? profileData.name.charAt(0).toUpperCase() : '?'}
                           </div>
                         )}
-                        <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-opacity">
+                        <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center text-[10px] font-bold text-slate-900 cursor-pointer transition-opacity">
                           CHANGE
                           <input type="file" accept="image/*" onChange={handleAvatarFileChange} className="hidden" />
                         </label>
@@ -981,13 +1016,13 @@ export default function CustomerDashboard() {
 
                     {/* Name input */}
                     <div className="space-y-2">
-                      <label htmlFor="profile-fullname" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Name</label>
+                      <label htmlFor="profile-fullname" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Full Name</label>
                       <input
                         id="profile-fullname"
                         type="text"
                         value={profileData.name}
                         onChange={e => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-medium font-semibold"
+                        className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-medium font-semibold"
                         required
                       />
                     </div>
@@ -995,13 +1030,13 @@ export default function CustomerDashboard() {
                     {/* Grooming Preferences */}
                     <div className="space-y-4 pt-2">
                       <div>
-                        <h3 className="text-sm font-bold text-white mb-0.5">Style Preferences</h3>
+                        <h3 className="text-sm font-bold text-slate-900 mb-0.5">Style Preferences</h3>
                         <p className="text-[11px] text-slate-500">Select your hair texture and beard choice to help barbers prepare styles custom-tailored to you.</p>
                       </div>
 
                       {/* Hair Type selectors */}
                       <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Hair Texture</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Hair Texture</span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                           {['Straight', 'Wavy', 'Curly', 'Coily'].map(style => {
                             const isSelected = profileData.hairType === style;
@@ -1013,7 +1048,7 @@ export default function CustomerDashboard() {
                                 className={`py-3 px-2 text-xs font-bold rounded-xl border text-center transition-all cursor-pointer ${
                                   isSelected
                                     ? 'bg-violet-600/15 border-violet-500 text-violet-300 shadow-md shadow-violet-500/5'
-                                    : 'bg-white/[0.01] border-white/[0.04] text-slate-400 hover:text-slate-350 hover:border-white/[0.08]'
+                                    : 'bg-white border-indigo-100/60 text-slate-500 hover:text-slate-350 hover:border-indigo-100/60'
                                 }`}
                               >
                                 {style}
@@ -1025,7 +1060,7 @@ export default function CustomerDashboard() {
 
                       {/* Beard style selectors */}
                       <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Beard Preference</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Beard Preference</span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                           {['Clean Shaven', 'Stubble', 'Full Beard', 'Goatee'].map(style => {
                             const isSelected = profileData.beardStyle === style;
@@ -1037,7 +1072,7 @@ export default function CustomerDashboard() {
                                 className={`py-3 px-2 text-xs font-bold rounded-xl border text-center transition-all cursor-pointer ${
                                   isSelected
                                     ? 'bg-violet-600/15 border-violet-500 text-violet-300 shadow-md shadow-violet-500/5'
-                                    : 'bg-white/[0.01] border-white/[0.04] text-slate-400 hover:text-slate-350 hover:border-white/[0.08]'
+                                    : 'bg-white border-indigo-100/60 text-slate-500 hover:text-slate-350 hover:border-indigo-100/60'
                                 }`}
                               >
                                 {style}
@@ -1051,7 +1086,7 @@ export default function CustomerDashboard() {
                     <button
                       type="submit"
                       disabled={savingProfile}
-                      className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto border-none"
+                      className="btn-primary text-slate-900 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto border-none"
                     >
                       {savingProfile ? 'Saving Details...' : 'Save Details'}
                     </button>
@@ -1061,26 +1096,26 @@ export default function CustomerDashboard() {
                 {activeProfileSection === 'personal-settings' && (
                   <form onSubmit={handleSaveProfile} className="space-y-6">
                     <div>
-                      <h2 className="text-base font-bold text-white mb-1">Personal Settings</h2>
+                      <h2 className="text-base font-bold text-slate-900 mb-1">Personal Settings</h2>
                       <p className="text-xs text-slate-500">Edit contact details, configure notification options, or update your account password.</p>
                     </div>
 
                     {/* Email Input */}
                     <div className="space-y-2">
-                      <label htmlFor="settings-email" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <label htmlFor="settings-email" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Email Address</label>
                       <input
                         id="settings-email"
                         type="email"
                         value={profileData.email}
                         onChange={e => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold"
+                        className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold"
                         required
                       />
                     </div>
 
                     {/* Phone Input */}
                     <div className="space-y-2">
-                      <label htmlFor="settings-phone" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Phone Number</label>
+                      <label htmlFor="settings-phone" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Phone Number</label>
                       <input
                         id="settings-phone"
                         type="tel"
@@ -1089,19 +1124,19 @@ export default function CustomerDashboard() {
                           const cleanVal = e.target.value.replace(/[^0-9]/g, '');
                           setProfileData(prev => ({ ...prev, phone: cleanVal }));
                         }}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold"
+                        className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold"
                         required
                       />
                     </div>
 
                     {/* Country Input */}
                     <div className="space-y-2">
-                      <label htmlFor="settings-country" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Country</label>
+                      <label htmlFor="settings-country" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Country</label>
                       <select
                         id="settings-country"
                         value={profileData.country}
                         onChange={e => setProfileData(prev => ({ ...prev, country: e.target.value }))}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold bg-slate-900"
+                        className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold bg-slate-900"
                       >
                         <option value="India">India</option>
                         <option value="United States">United States</option>
@@ -1111,7 +1146,7 @@ export default function CustomerDashboard() {
 
                     {/* Notifications Switches */}
                     <div className="space-y-3 pt-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Communication Preferences</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Communication Preferences</span>
                       <div className="space-y-2.5">
                         <label className="flex items-center gap-3 cursor-pointer select-none">
                           <input
@@ -1123,7 +1158,7 @@ export default function CustomerDashboard() {
                             }))}
                             className="w-4 h-4 accent-violet-600 rounded cursor-pointer"
                           />
-                          <span className="text-xs text-slate-300 font-semibold">Receive booking summaries and reminders via Email</span>
+                          <span className="text-xs text-slate-700 font-semibold">Receive booking summaries and reminders via Email</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer select-none">
                           <input
@@ -1135,21 +1170,21 @@ export default function CustomerDashboard() {
                             }))}
                             className="w-4 h-4 accent-violet-600 rounded cursor-pointer"
                           />
-                          <span className="text-xs text-slate-300 font-semibold">Receive live queue alerts and SMS updates</span>
+                          <span className="text-xs text-slate-700 font-semibold">Receive live queue alerts and SMS updates</span>
                         </label>
                       </div>
                     </div>
 
                     {/* Change Password Block */}
-                    <div className="border-t border-white/[0.05] pt-5 space-y-4">
+                    <div className="border-t border-indigo-100/60 pt-5 space-y-4">
                       <div>
-                        <h3 className="text-sm font-bold text-white mb-0.5">Change Password</h3>
+                        <h3 className="text-sm font-bold text-slate-900 mb-0.5">Change Password</h3>
                         <p className="text-[11px] text-slate-500">Leave these fields blank if you do not wish to update your password.</p>
                       </div>
 
                       {/* Current password */}
                       <div className="space-y-2">
-                        <label htmlFor="settings-curr-pwd" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Password</label>
+                        <label htmlFor="settings-curr-pwd" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Current Password</label>
                         <div className="relative">
                           <input
                             id="settings-curr-pwd"
@@ -1157,12 +1192,12 @@ export default function CustomerDashboard() {
                             placeholder="Enter current password"
                             value={passwordForm.currentPassword}
                             onChange={e => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 pr-11 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold"
+                            className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 pr-11 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold"
                           />
                           <button
                             type="button"
                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-500 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
                           >
                             {showCurrentPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                           </button>
@@ -1172,7 +1207,7 @@ export default function CustomerDashboard() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* New password */}
                         <div className="space-y-2">
-                          <label htmlFor="settings-new-pwd" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">New Password</label>
+                          <label htmlFor="settings-new-pwd" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">New Password</label>
                           <div className="relative">
                             <input
                               id="settings-new-pwd"
@@ -1180,12 +1215,12 @@ export default function CustomerDashboard() {
                               placeholder="Min. 6 characters"
                               value={passwordForm.newPassword}
                               onChange={e => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 pr-11 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold"
+                              className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 pr-11 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold"
                             />
                             <button
                               type="button"
                               onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-500 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
                             >
                               {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                             </button>
@@ -1194,7 +1229,7 @@ export default function CustomerDashboard() {
 
                         {/* Confirm password */}
                         <div className="space-y-2">
-                          <label htmlFor="settings-confirm-pwd" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Confirm Password</label>
+                          <label htmlFor="settings-confirm-pwd" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Confirm Password</label>
                           <div className="relative">
                             <input
                               id="settings-confirm-pwd"
@@ -1202,12 +1237,12 @@ export default function CustomerDashboard() {
                               placeholder="Confirm new password"
                               value={passwordForm.confirmPassword}
                               onChange={e => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 pr-11 text-sm text-slate-200 outline-none focus:border-violet-500/50 transition-colors font-semibold"
+                              className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 pr-11 text-sm text-slate-800 outline-none focus:border-violet-500/50 transition-colors font-semibold"
                             />
                             <button
                               type="button"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-500 bg-transparent border-none cursor-pointer outline-none flex items-center justify-center p-1"
                             >
                               {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                             </button>
@@ -1219,7 +1254,7 @@ export default function CustomerDashboard() {
                     <button
                       type="submit"
                       disabled={savingProfile}
-                      className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto border-none"
+                      className="btn-primary text-slate-900 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto border-none"
                     >
                       {savingProfile ? 'Saving Settings...' : 'Save Settings'}
                     </button>
@@ -1229,25 +1264,25 @@ export default function CustomerDashboard() {
                 {activeProfileSection === 'help-support' && (
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-base font-bold text-white mb-1">Help & Support</h2>
+                      <h2 className="text-base font-bold text-slate-900 mb-1">Help & Support</h2>
                       <p className="text-xs text-slate-500">Read cancellation details or send a query directly to the TrimSync administration team.</p>
                     </div>
 
                     {/* FAQs Accordion */}
                     <div className="space-y-3">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Frequently Asked Questions</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Frequently Asked Questions</span>
                       <div className="space-y-2.5">
                         {[
                           { q: 'How do I check my position in the queue?', a: 'Go to your "Upcoming Bookings" tab. On the day of your appointment, a live queue tracker shows your real-time position (e.g. #3) and the number of people ahead of you.' },
                           { q: 'What is the booking cancellation policy?', a: 'You can cancel any booking free of charge up to 2 hours prior to the scheduled slot. The cancellation option is available in the booking details card.' },
                           { q: 'Can I request an earlier time slot?', a: 'Yes! If a barber finishes early, TrimSync will auto-generate an early shift invitation. You will see a notification bar at the top of your dashboard to accept or decline the change.' }
                         ].map((faq, idx) => (
-                          <details key={idx} className="group bg-white/[0.01] border border-white/[0.04] rounded-2xl p-4 cursor-pointer [&_summary::-webkit-details-marker]:hidden">
-                            <summary className="flex justify-between items-center text-xs font-bold text-slate-200 outline-none select-none">
+                          <details key={idx} className="group bg-white border border-indigo-100/60 rounded-2xl p-4 cursor-pointer [&_summary::-webkit-details-marker]:hidden">
+                            <summary className="flex justify-between items-center text-xs font-bold text-slate-800 outline-none select-none">
                               <span>{faq.q}</span>
                               <span className="text-violet-400 transition-transform duration-200 group-open:rotate-180">▼</span>
                             </summary>
-                            <p className="text-xs text-slate-500 leading-relaxed mt-2.5 pt-2.5 border-t border-white/[0.03]">
+                            <p className="text-xs text-slate-500 leading-relaxed mt-2.5 pt-2.5 border-t border-indigo-100/60">
                               {faq.a}
                             </p>
                           </details>
@@ -1256,9 +1291,9 @@ export default function CustomerDashboard() {
                     </div>
 
                     {/* Support message form */}
-                    <form onSubmit={handleSupportSubmit} className="space-y-4 border-t border-white/[0.05] pt-5">
+                    <form onSubmit={handleSupportSubmit} className="space-y-4 border-t border-indigo-100/60 pt-5">
                       <div>
-                        <h3 className="text-sm font-bold text-white mb-0.5">Submit Support Ticket</h3>
+                        <h3 className="text-sm font-bold text-slate-900 mb-0.5">Submit Support Ticket</h3>
                         <p className="text-[11px] text-slate-500">Have feedback or encountered issues? Submit details below and we will investigate.</p>
                       </div>
 
@@ -1269,61 +1304,61 @@ export default function CustomerDashboard() {
                       )}
 
                       <div className="space-y-2">
-                        <label htmlFor="support-subject" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Subject / Issue Title</label>
+                        <label htmlFor="support-subject" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Subject / Issue Title</label>
                         <input
                           id="support-subject"
                           type="text"
                           value={supportForm.subject}
                           onChange={e => setSupportForm(prev => ({ ...prev, subject: e.target.value }))}
                           placeholder="e.g. Queue tracker delay or payment enquiry"
-                          className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-violet-500/50 transition-colors"
+                          className="w-full bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:border-violet-500/50 transition-colors"
                           required
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="support-message" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Message Details</label>
+                        <label htmlFor="support-message" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Message Details</label>
                         <textarea
                           id="support-message"
                           value={supportForm.message}
                           onChange={e => setSupportForm(prev => ({ ...prev, message: e.target.value }))}
                           placeholder="Please describe your problem or suggestions here..."
-                          className="w-full h-28 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-violet-500/50 transition-colors resize-none fontFamily-inherit bg-transparent"
+                          className="w-full h-28 bg-white border border-indigo-100/60 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:border-violet-500/50 transition-colors resize-none fontFamily-inherit bg-transparent"
                           required
                         />
                       </div>
 
                       <button
                         type="submit"
-                        className="glass border border-violet-500/25 text-violet-300 hover:text-white hover:bg-violet-600/10 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto"
+                        className="glass border border-violet-500/25 text-violet-300 hover:text-slate-900 hover:bg-violet-600/10 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer w-full sm:w-auto"
                       >
                         Submit Ticket
                       </button>
                     </form>
                   </div>
                 )}
-              </div>
             </div>
           )}
         </div>
       </div>
+    </div>
 
-      {/* Rate Modal */}
+    {/* Rate Modal */}
       {showRateModal && (
-        <div onClick={e => e.target === e.currentTarget && setShowRateModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(5,3,15,0.78)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'linear-gradient(180deg,#15121f 0%,#0c0a16 100%)', border: '1px solid rgba(167,139,250,0.18)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 40px 90px -20px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+        <div onClick={e => e.target === e.currentTarget && setShowRateModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 40px 90px -20px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 20 }}>
               <div>
                 <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: '#a78bfa', textTransform: 'uppercase', marginBottom: 4 }}>Your Feedback</p>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', letterSpacing: '-0.01em' }}>Rate & Review</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.01em' }}>Rate & Review</h2>
               </div>
-              <button onClick={() => setShowRateModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, width: 32, height: 32, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <button onClick={() => setShowRateModal(false)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 10, width: 32, height: 32, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
 
             <form onSubmit={submitRating} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)' }}>Select Rating</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b' }}>Select Rating</span>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#f59e0b', textShadow: '0 0 10px rgba(245,158,11,0.2)' }}>
                     {(() => {
                       const active = hoveredRating || ratingVal;
@@ -1340,7 +1375,7 @@ export default function CustomerDashboard() {
                 </div>
                 <div 
                   onMouseLeave={() => setHoveredRating(0)}
-                  style={{ display: 'flex', gap: 8, padding: '14px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, justifyContent: 'space-between' }}
+                  style={{ display: 'flex', gap: 8, padding: '14px 18px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 18, justifyContent: 'space-between' }}
                 >
                   {[1, 2, 3, 4, 5].map((star) => {
                     const activeVal = hoveredRating || ratingVal;
@@ -1374,12 +1409,12 @@ export default function CustomerDashboard() {
               </div>
 
               <div>
-                <span style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Write a Review</span>
+                <span style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b', marginBottom: 10 }}>Write a Review</span>
                 <textarea
                   value={reviewText}
                   onChange={e => setReviewText(e.target.value)}
                   placeholder="Share your experience (optional)..."
-                  style={{ width: '100%', height: 100, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#e2e8f0', fontSize: 13, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .2s' }}
+                  style={{ width: '100%', height: 100, padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, color: '#e2e8f0', fontSize: 13, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .2s' }}
                   onFocus={e => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                 />
@@ -1387,7 +1422,7 @@ export default function CustomerDashboard() {
 
               <button
                 type="submit"
-                style={{ width: '100%', padding: '13px', background: 'linear-gradient(135deg,#8b5cf6 0%,#d946ef 100%)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 14px 36px -10px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.2)' }}
+                style={{ width: '100%', padding: '13px', background: 'linear-gradient(135deg,#8b5cf6 0%,#d946ef 100%)', border: 'none', borderRadius: 12, color: '#0f172a', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 14px 36px -10px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.2)' }}
               >
                 Submit Review
               </button>
