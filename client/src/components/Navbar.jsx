@@ -100,76 +100,75 @@ const Navbar = ({ onProfileClick, customerName, customerAvatar }) => {
           )}
         </div>
 
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2 text-gray-900">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile Action (List Business instead of Hamburger) */}
+        <div className="md:hidden flex items-center">
+          <button 
+            onClick={() => navigate('/register')} 
+            className="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm active:scale-95 text-[10px] flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Store size={12} /> List Business
+          </button>
+        </div>
       </div>
 
-      {isOpen && (
-        <div className="md:hidden mt-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 flex flex-col gap-4">
-          {/* List Your Business - Order 1 */}
+      {/* Mobile Bottom Navigation Bar (iOS Style) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center px-2 py-3 z-[100] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <button 
+          onClick={() => navigate('/')} 
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 active:scale-95 transition-all"
+        >
+          <Home size={22} className={location.pathname === '/' ? "text-indigo-600" : ""} />
+          <span className={`text-[9px] font-bold ${location.pathname === '/' ? 'text-indigo-600' : ''}`}>Home</span>
+        </button>
+
+        {isLoggedIn ? (
           <button 
-            onClick={() => { navigate('/register'); setIsOpen(false); }} 
-            className="bg-black text-white font-bold p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-indigo-600 active:scale-98 transition-all"
+            onClick={() => navigate('/owner')} 
+            className="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 active:scale-95 transition-all"
           >
-            <Store size={18} /> List Your Business
+            <LayoutDashboard size={22} className={location.pathname.includes('/owner') ? "text-indigo-600" : ""} />
+            <span className={`text-[9px] font-bold ${location.pathname.includes('/owner') ? 'text-indigo-600' : ''}`}>Dashboard</span>
           </button>
-
-          {/* Home Link - Order 2 */}
+        ) : hasCustomerId ? (
           <button 
-            onClick={() => { navigate('/'); setIsOpen(false); }} 
-            className="flex items-center gap-2 font-bold text-gray-800 p-2.5 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg text-left transition-all"
+            onClick={() => {
+              sessionStorage.setItem('trimSync_customerActiveTab', 'bookings');
+              navigate('/customer');
+              window.dispatchEvent(new Event('customer_bookings_tab_click'));
+            }} 
+            className="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 active:scale-95 transition-all"
           >
-            <Home size={18} /> Home
+            <Calendar size={22} className={location.pathname === '/customer' ? "text-indigo-600" : ""} />
+            <span className={`text-[9px] font-bold ${location.pathname === '/customer' ? 'text-indigo-600' : ''}`}>Bookings</span>
           </button>
+        ) : (
+          <button 
+            onClick={() => navigate('/login')} 
+            className="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 active:scale-95 transition-all"
+          >
+            <Lock size={22} className={location.pathname === '/login' ? "text-indigo-600" : ""} />
+            <span className={`text-[9px] font-bold ${location.pathname === '/login' ? 'text-indigo-600' : ''}`}>Log in</span>
+          </button>
+        )}
 
-          {/* My Bookings / Dashboard / Login Link - Order 3 */}
-          {isLoggedIn ? (
-            <button 
-              onClick={() => { navigate('/owner'); setIsOpen(false); }} 
-              className="flex items-center gap-2 font-bold text-gray-800 p-2.5 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg text-left transition-all"
-            >
-              <LayoutDashboard size={18} /> Dashboard
-            </button>
-          ) : hasCustomerId ? (
-            <button 
-              onClick={() => {
-                sessionStorage.setItem('trimSync_customerActiveTab', 'bookings');
-                navigate('/customer');
-                setIsOpen(false);
-                window.dispatchEvent(new Event('customer_bookings_tab_click'));
-              }} 
-              className="flex items-center gap-2 font-bold text-gray-800 p-2.5 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg text-left transition-all"
-            >
-              <LayoutDashboard size={18} /> My Bookings
-            </button>
-          ) : (
-            <button 
-              onClick={() => { navigate('/login'); setIsOpen(false); }} 
-              className="flex items-center gap-2 font-bold text-gray-800 p-2.5 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg text-left transition-all"
-            >
-              <Lock size={18} /> Log in
-            </button>
-          )}
-
-          {/* Customer Profile Link - Order 4 */}
-          {hasCustomerId && (
-            <button 
-              onClick={() => { onProfileClick(); setIsOpen(false); }} 
-              className="flex items-center gap-3 font-bold text-gray-800 p-2.5 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg text-left w-full transition-all"
-            >
+        {hasCustomerId && (
+          <button 
+            onClick={onProfileClick} 
+            className="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 active:scale-95 transition-all"
+          >
+            <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-300">
               {customerAvatar ? (
-                <img src={customerAvatar} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-black/15 shrink-0" />
+                <img src={customerAvatar} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-gray-800 font-bold text-sm shrink-0">
+                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-700 font-bold text-[10px]">
                   {customerName.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span>My Profile</span>
-            </button>
-          )}
-        </div>
-      )}
+            </div>
+            <span className="text-[9px] font-bold">Profile</span>
+          </button>
+        )}
+      </div>
     </nav>
   );
 };
