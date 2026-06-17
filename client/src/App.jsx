@@ -178,7 +178,7 @@ export default function App() {
   const hideNavbar = location.pathname.startsWith('/owner') || location.pathname.startsWith('/admin');
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+    <div className="min-h-screen bg-gray-50 font-sans flex flex-col overflow-x-hidden">
       {!hideNavbar && (
         <Navbar 
           onProfileClick={() => {

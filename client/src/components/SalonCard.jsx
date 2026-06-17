@@ -31,24 +31,16 @@ const SalonCard = ({ salon, onBook }) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-200 relative flex flex-col h-full">
       {/* Salon Cover Carousel */}
-      <div style={{ height: 160, width: '100%', background: 'linear-gradient(135deg, #f5f3ff, #eef2f6)', position: 'relative', overflow: 'hidden' }}>
+      <div className="h-40 w-full bg-gradient-to-br from-[#f5f3ff] to-[#eef2f6] relative overflow-hidden">
         {images.length > 0 ? (
           images.map((img, idx) => (
             <img 
               key={idx}
               src={img} 
               alt={`${salon.name} image ${idx}`} 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover', 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                opacity: currentSlide === idx ? 1 : 0,
-                transform: currentSlide === idx ? 'scale(1)' : 'scale(1.05)',
-                transition: 'opacity 0.8s ease-in-out, transform 0.8s ease-in-out' 
-              }} 
+              className={`w-full h-full object-cover absolute top-0 left-0 transition-all duration-800 ease-in-out ${
+                currentSlide === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+              }`}
             />
           ))
         ) : (
@@ -60,24 +52,20 @@ const SalonCard = ({ salon, onBook }) => {
         
         {/* Slides indicator dots */}
         {images.length > 1 && (
-          <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 5, zIndex: 10 }}>
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, idx) => (
               <div 
                 key={idx} 
-                style={{ 
-                  width: 6, 
-                  height: 6, 
-                  borderRadius: '50%', 
-                  background: idx === currentSlide ? 'white' : 'rgba(255, 255, 255, 0.4)', 
-                  transition: 'background 0.2s' 
-                }} 
+                className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+                  idx === currentSlide ? 'bg-white' : 'bg-white/40'
+                }`}
               />
             ))}
           </div>
         )}
 
-        <div className={`absolute top-0 right-0 px-3 md:px-4 py-1.5 text-[10px] md:text-xs font-bold text-white flex items-center rounded-bl-lg ${salon.currentQueue === 0 ? 'bg-green-500' : salon.currentQueue < 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ zIndex: 11 }}>
-          <Users size={14} className="mr-1.5" style={{ zIndex: 12 }} />
+        <div className={`absolute top-0 right-0 px-3 md:px-4 py-1.5 text-[10px] md:text-xs font-bold text-white flex items-center rounded-bl-lg z-[11] ${salon.currentQueue === 0 ? 'bg-green-500' : salon.currentQueue < 3 ? 'bg-yellow-500' : 'bg-red-500'}`}>
+          <Users size={14} className="mr-1.5 z-[12]" />
           {salon.currentQueue === 0 ? 'No Rush' : `${salon.currentQueue} in Queue`}
         </div>
       </div>

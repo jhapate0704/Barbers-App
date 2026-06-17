@@ -100,7 +100,7 @@ const MarketplaceView = ({ salons, onBook }) => {
   const recentlyViewed = salons.filter(s => recentlyViewedIds.includes(s._id));
 
   return (
-    <div className="max-w-[1440px] mx-auto mt-4 md:mt-8 px-4 md:px-10 pb-24 md:pb-12 flex flex-col items-center">
+    <div className="max-w-[1440px] mx-auto mt-4 md:mt-8 px-4 md:px-10 pb-12 flex flex-col items-center overflow-x-hidden">
       {/* Hero Welcoming Section */}
       <div className="w-full text-center py-16 md:py-24 px-8 md:px-16 mb-12 bg-linear-to-br from-indigo-50/60 via-white to-purple-50/40 rounded-[36px] border border-indigo-100/50 shadow-[0_24px_60px_-15px_rgba(99,102,241,0.08)] relative overflow-hidden flex flex-col items-center justify-center">
         {/* Subtle background decorative shapes */}
