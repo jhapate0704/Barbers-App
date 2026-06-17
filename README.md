@@ -81,23 +81,6 @@
     npm run dev
     # Vite will spin up the frontend on http://localhost:5173
 
-  ## 📂 Project Architecture
-
-    TrimSync/
-    ├── client/                 # React Frontend
-    │   ├── src/
-    │   │   ├── components/     # Reusable UI elements (Navbar, Cards, Modals)
-    │   │   ├── pages/          # Full-page Dashboards (Owner, Customer, Admin)
-    │   │   ├── views/          # Public-facing views (Marketplace, Booking, Auth)
-    │   │   └── utils/          # Formatting & helper functions
-    │   ├── index.html
-    │   └── vite.config.js
-    │
-    └── server/                 # Express Backend
-        ├── models/             # Mongoose Schemas (User, Salon, Booking)
-        ├── routes/             # API Endpoints
-        ├── middleware/         # Auth guards
-        └── index.js            # Entry point & Socket.io setup
 
   ## 🛡️ Security
 
