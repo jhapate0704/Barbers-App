@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function ProfileTab({ customerId, activeProfileSection }) {
   const [profileData, setProfileData] = useState({
@@ -65,7 +65,10 @@ export default function ProfileTab({ customerId, activeProfileSection }) {
         payload.newPassword = passwordForm.newPassword;
       }
 
-      const res = await axios.post(`${API_BASE}/users/profile/update`, payload);
+      const token = localStorage.getItem('customerToken');
+      const res = await axios.put(`${API_BASE}/users/profile/update`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProfileSuccess('Profile updated successfully!');
       
       localStorage.setItem('customerName', res.data.user.name);

@@ -9,10 +9,10 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 
-const SalonMap = ({ latitude, longitude, address, salonName }) => {
+const SalonMap = ({ latitude, longitude, address, salonName, hideDirections }) => {
   const mapRef = React.useRef(null);
   const mapInstanceRef = React.useRef(null);
 
@@ -66,15 +66,17 @@ const SalonMap = ({ latitude, longitude, address, salonName }) => {
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">{address}</p>
         </div>
-        <a 
-          href={directionsUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer decoration-none"
-        >
-          <ExternalLink size={14} />
-          Get Directions
-        </a>
+        {!hideDirections && (
+          <a 
+            href={directionsUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer decoration-none"
+          >
+            <ExternalLink size={14} />
+            Get Directions
+          </a>
+        )}
       </div>
       <div 
         ref={mapRef} 

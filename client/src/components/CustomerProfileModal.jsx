@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 
 const CustomerProfileModal = ({ isOpen, onClose, customerId, onProfileUpdated }) => {
@@ -80,7 +80,10 @@ const CustomerProfileModal = ({ isOpen, onClose, customerId, onProfileUpdated })
         payload.avatar = newAvatar;
       }
 
-      const res = await axios.post(`${API_BASE}/users/profile/update`, payload);
+      const token = localStorage.getItem('customerToken');
+      const res = await axios.put(`${API_BASE}/users/profile/update`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const updatedUser = res.data.user;
       
       localStorage.setItem('customerName', updatedUser.name);

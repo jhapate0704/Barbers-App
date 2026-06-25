@@ -1,61 +1,45 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const Booking = require('../models/booking_models.js');
 const Salon = require('../models/salon_models.js');
 const verifyToken = require('../middleware/auth.js');
+const {
+  calculateTotalDuration,
+  addMinutes,
+  timeToMinutes,
+  minutesToTime,
+  getLocalServerTime,
+  decrementQueue,
+  shiftUpcomingBookings
+} = require('../services/booking_service.js');
 
-// Helper function to calculate total duration of requested services
-const calculateTotalDuration = (salonServices, requestedServiceNames) => {
-  let totalTime = 0;
-  requestedServiceNames.forEach(reqServiceName => {
-    const service = salonServices.find(s => s.name === reqServiceName);
-    if (service) totalTime += service.duration;
-  });
-  return totalTime;
-};
-
-// HELPER FUNCTION: Add minutes to a time string (e.g., "10:00" + 50 mins = "10:50")
-const addMinutes = (timeString, minsToAdd) => {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
-  date.setMinutes(date.getMinutes() + minsToAdd);
-  return date.toTimeString().substring(0, 5); // returns "HH:MM"
-};
-
-const timeToMinutes = (timeStr) => {
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
-};
-
-const minutesToTime = (totalMinutes) => {
-  const hours = Math.floor(totalMinutes / 60) % 24;
-  const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+// Validation Middleware Helper
+const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array()[0].msg, errors: errors.array() });
+  }
+  next();
 };
 
 // ==========================================
 // POST ROUTE: Create a new booking
 // URL: http://localhost:5000/api/bookings/create
 // ==========================================
-router.post('/create', async (req, res) => {
+router.post('/create', [
+  body('customerId').notEmpty().withMessage('customerId is required'),
+  body('salonId').notEmpty().withMessage('salonId is required'),
+  body('chairId').notEmpty().withMessage('chairId is required'),
+  body('requestedServices').isArray({ min: 1 }).withMessage('requestedServices must be a non-empty array'),
+  body('appointmentDate').isISO8601().withMessage('appointmentDate must be a valid date'),
+  body('startTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('startTime must be HH:MM format')
+], validateRequest, async (req, res) => {
   try {
     const { customerId, salonId, chairId, requestedServices, appointmentDate, startTime } = req.body;
 
     const salon = await Salon.findById(salonId);
     if (!salon) return res.status(404).json({ message: 'Salon not found' });
-
-    // ⏳ VALIDATION: Prevent Booking in the Past (Time/Date)
-    const getLocalServerTime = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset(); // in minutes
-      const localTime = new Date(d.getTime() - (offset * 60 * 1000));
-      const [date, time] = localTime.toISOString().split('T');
-      return {
-        dateStr: date,
-        timeStr: time.substring(0, 5) // "HH:MM"
-      };
-    };
 
     const localNow = getLocalServerTime();
     const apptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
@@ -67,21 +51,17 @@ router.post('/create', async (req, res) => {
       return res.status(400).json({ message: 'Cannot book appointments for past times today.' });
     }
 
-    // 🕒 VALIDATION: Check Operating Hours
     if (startTime < salon.operatingHours.open || startTime > salon.operatingHours.close) {
       return res.status(400).json({ message: `Salon is only open between ${salon.operatingHours.open} and ${salon.operatingHours.close}` });
     }
 
-    // 🗓️ VALIDATION: Check Weekly Off Day
     const dateObj = new Date(appointmentDate);
     if (dateObj.getDay() === salon.weeklyOffDay) {
       return res.status(400).json({ message: 'Salon is closed on this day of the week.' });
     }
 
-    // 🛑 VALIDATION: Check "Off Today" flag
     const todayStr = new Date().toISOString().split('T')[0];
-    const apptStr = new Date(appointmentDate).toISOString().split('T')[0];
-    if (salon.isOffToday && todayStr === apptStr) {
+    if (salon.isOffToday && todayStr === apptDateStr) {
       return res.status(400).json({ message: 'Salon is marked as OFF for today.' });
     }
 
@@ -119,14 +99,12 @@ router.post('/create', async (req, res) => {
 
     const savedBooking = await newBooking.save();
 
-    // 🚀 QUEUE UPDATE: Increment the salon's queue!
     const updatedSalon = await Salon.findByIdAndUpdate(
       salonId, 
       { $inc: { currentQueue: 1 } }, 
       { returnDocument: 'after' }
     );
 
-    // ✨ WEBSOCKET MAGIC: Broadcast the new higher queue to the marketplace
     if (req.io) {
       req.io.emit('queue_updated', { salonId: salon._id, newQueueCount: updatedSalon.currentQueue });
     }
@@ -141,12 +119,13 @@ router.post('/create', async (req, res) => {
 
 
 // ==========================================
-// POST ROUTE: Mark booking as completed and trigger Bump-Up
-// URL: http://localhost:5000/api/bookings/complete
+// PUT ROUTE: Mark booking as completed and trigger Bump-Up
 // ==========================================
-router.post('/complete', async (req, res) => {
+router.put('/complete', [
+  body('bookingId').notEmpty().withMessage('bookingId is required')
+], validateRequest, async (req, res) => {
   try {
-    const { bookingId } = req.body; // Getting ID from the body now, matching the frontend!
+    const { bookingId } = req.body;
     
     const booking = await Booking.findByIdAndUpdate(
         bookingId, 
@@ -155,21 +134,7 @@ router.post('/complete', async (req, res) => {
     );
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
-    // 🚀 QUEUE UPDATE: Decrement the salon's queue!
-    const updatedSalon = await Salon.findByIdAndUpdate(
-      booking.salonId,
-      { $inc: { currentQueue: -1 } }, 
-      { returnDocument: 'after' }
-    );
-
-    // Failsafe to ensure queue doesn't go below 0
-    if (updatedSalon.currentQueue < 0) {
-        updatedSalon.currentQueue = 0;
-        await updatedSalon.save();
-    }
-
-    console.log(`\n--- DEBUGGING BUMP UP ---`);
-    console.log(`Booking ${bookingId} Completed!`);
+    await decrementQueue(booking.salonId, req.io);
 
     const nextBooking = await Booking.findOne({
       salonId: booking.salonId,
@@ -178,18 +143,6 @@ router.post('/complete', async (req, res) => {
       status: 'scheduled',
       startTime: { $gte: booking.endTime } 
     }).sort({ startTime: 1 }); 
-
-    if (nextBooking) {
-      console.log(`🚀 BUMP UP ALERT: Tell user ${nextBooking.customerId} that their chair is ready early!`);
-    } else {
-      console.log(`❌ No upcoming bookings found for this chair today.`);
-    }
-    console.log(`-------------------------\n`);
-
-    // ✨ WEBSOCKET MAGIC: Broadcast the new lower queue to the marketplace
-    if (req.io) {
-      req.io.emit('queue_updated', { salonId: updatedSalon._id, newQueueCount: updatedSalon.currentQueue });
-    }
 
     res.status(200).json({
       message: 'Booking completed successfully.',
@@ -203,21 +156,17 @@ router.post('/complete', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Complete booking early and handle upcoming queue
-// URL: http://localhost:5000/api/bookings/complete-early
+// PUT ROUTE: Complete booking early and handle upcoming queue
 // ==========================================
-router.post('/complete-early', async (req, res) => {
+router.put('/complete-early', [
+  body('bookingId').notEmpty().withMessage('bookingId is required'),
+  body('actualEndTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('actualEndTime must be HH:MM')
+], validateRequest, async (req, res) => {
   try {
-    const { bookingId, actualEndTime, shiftType } = req.body; // shiftType: 'force' or 'request'
-
-    if (!bookingId || !actualEndTime) {
-      return res.status(400).json({ message: 'Booking ID and actual end time are required.' });
-    }
+    const { bookingId, actualEndTime, shiftType } = req.body;
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found.' });
-    }
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
 
     const originalEndTime = booking.endTime;
     const originalEndMins = timeToMinutes(originalEndTime);
@@ -233,25 +182,8 @@ router.post('/complete-early', async (req, res) => {
     let shiftedCount = 0;
     if (diff > 0) {
       if (shiftType === 'force') {
-        const upcomingBookings = await Booking.find({
-          salonId: booking.salonId,
-          chairId: booking.chairId,
-          appointmentDate: booking.appointmentDate,
-          status: 'scheduled',
-          startTime: { $gte: originalEndTime }
-        });
-
-        for (const upcoming of upcomingBookings) {
-          const uStartMins = timeToMinutes(upcoming.startTime);
-          const uEndMins = timeToMinutes(upcoming.endTime);
-
-          upcoming.startTime = minutesToTime(uStartMins - diff);
-          upcoming.endTime = minutesToTime(uEndMins - diff);
-          await upcoming.save();
-        }
-        shiftedCount = upcomingBookings.length;
+        shiftedCount = await shiftUpcomingBookings(booking.salonId, booking.chairId, booking.appointmentDate, originalEndTime, diff);
       } else {
-        // Send request to the next customer in line
         const nextBooking = await Booking.findOne({
           salonId: booking.salonId,
           chairId: booking.chairId,
@@ -273,20 +205,7 @@ router.post('/complete-early', async (req, res) => {
       }
     }
 
-    const updatedSalon = await Salon.findByIdAndUpdate(
-      booking.salonId,
-      { $inc: { currentQueue: -1 } },
-      { returnDocument: 'after' }
-    );
-
-    if (updatedSalon.currentQueue < 0) {
-      updatedSalon.currentQueue = 0;
-      await updatedSalon.save();
-    }
-
-    if (req.io) {
-      req.io.emit('queue_updated', { salonId: updatedSalon._id, newQueueCount: updatedSalon.currentQueue });
-    }
+    await decrementQueue(booking.salonId, req.io);
 
     res.status(200).json({
       message: 'Booking completed early and queue processed successfully.',
@@ -301,30 +220,23 @@ router.post('/complete-early', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Customer responds to reschedule request
-// URL: http://localhost:5000/api/bookings/respond-reschedule
+// PUT ROUTE: Customer responds to reschedule request
 // ==========================================
-router.post('/respond-reschedule', async (req, res) => {
+router.put('/respond-reschedule', [
+  body('bookingId').notEmpty().withMessage('bookingId is required'),
+  body('response').isIn(['accepted', 'declined']).withMessage('response must be accepted or declined')
+], validateRequest, async (req, res) => {
   try {
-    const { bookingId, response } = req.body; // response: 'accepted' or 'declined'
-
-    if (!bookingId || !response) {
-      return res.status(400).json({ message: 'Booking ID and response are required.' });
-    }
+    const { bookingId, response } = req.body;
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found.' });
-    }
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
 
     if (response === 'accepted' && booking.proposedStartTime) {
       const originalStartTime = booking.startTime;
       const proposedStartTime = booking.proposedStartTime;
-      const originalStartMins = timeToMinutes(originalStartTime);
-      const proposedStartMins = timeToMinutes(proposedStartTime);
-      const diff = originalStartMins - proposedStartMins;
+      const diff = timeToMinutes(originalStartTime) - timeToMinutes(proposedStartTime);
 
-      // Update current booking times
       booking.startTime = booking.proposedStartTime;
       booking.endTime = booking.proposedEndTime;
       booking.rescheduleStatus = 'accepted';
@@ -332,36 +244,18 @@ router.post('/respond-reschedule', async (req, res) => {
       booking.proposedEndTime = undefined;
       await booking.save();
 
-      // Shift subsequent bookings on the same chair and day
       if (diff > 0) {
-        const upcomingBookings = await Booking.find({
-          salonId: booking.salonId,
-          chairId: booking.chairId,
-          appointmentDate: booking.appointmentDate,
-          status: 'scheduled',
-          startTime: { $gte: originalStartTime }
-        });
-
-        for (const upcoming of upcomingBookings) {
-          const uStartMins = timeToMinutes(upcoming.startTime);
-          const uEndMins = timeToMinutes(upcoming.endTime);
-
-          upcoming.startTime = minutesToTime(uStartMins - diff);
-          upcoming.endTime = minutesToTime(uEndMins - diff);
-          await upcoming.save();
-        }
+        await shiftUpcomingBookings(booking.salonId, booking.chairId, booking.appointmentDate, originalStartTime, diff);
       }
     } else {
-      // Declined
       booking.rescheduleStatus = 'declined';
       booking.proposedStartTime = undefined;
       booking.proposedEndTime = undefined;
       await booking.save();
     }
 
-    // Trigger update
-    const updatedSalon = await Salon.findById(booking.salonId);
     if (req.io) {
+      const updatedSalon = await Salon.findById(booking.salonId);
       req.io.emit('queue_updated', { salonId: booking.salonId, newQueueCount: updatedSalon.currentQueue });
     }
 
@@ -374,30 +268,23 @@ router.post('/respond-reschedule', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Owner forces or cancels reschedule request
-// URL: http://localhost:5000/api/bookings/action-reschedule
+// PUT ROUTE: Owner forces or cancels reschedule request
 // ==========================================
-router.post('/action-reschedule', async (req, res) => {
+router.put('/action-reschedule', [
+  body('bookingId').notEmpty().withMessage('bookingId is required'),
+  body('action').isIn(['force', 'cancel']).withMessage('action must be force or cancel')
+], validateRequest, async (req, res) => {
   try {
-    const { bookingId, action } = req.body; // action: 'force' or 'cancel'
-
-    if (!bookingId || !action) {
-      return res.status(400).json({ message: 'Booking ID and action are required.' });
-    }
+    const { bookingId, action } = req.body;
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found.' });
-    }
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
 
     if (action === 'force' && booking.proposedStartTime) {
       const originalStartTime = booking.startTime;
       const proposedStartTime = booking.proposedStartTime;
-      const originalStartMins = timeToMinutes(originalStartTime);
-      const proposedStartMins = timeToMinutes(proposedStartTime);
-      const diff = originalStartMins - proposedStartMins;
+      const diff = timeToMinutes(originalStartTime) - timeToMinutes(proposedStartTime);
 
-      // Update times
       booking.startTime = booking.proposedStartTime;
       booking.endTime = booking.proposedEndTime;
       booking.rescheduleStatus = 'accepted';
@@ -405,36 +292,18 @@ router.post('/action-reschedule', async (req, res) => {
       booking.proposedEndTime = undefined;
       await booking.save();
 
-      // Shift subsequent bookings
       if (diff > 0) {
-        const upcomingBookings = await Booking.find({
-          salonId: booking.salonId,
-          chairId: booking.chairId,
-          appointmentDate: booking.appointmentDate,
-          status: 'scheduled',
-          startTime: { $gte: originalStartTime }
-        });
-
-        for (const upcoming of upcomingBookings) {
-          const uStartMins = timeToMinutes(upcoming.startTime);
-          const uEndMins = timeToMinutes(upcoming.endTime);
-
-          upcoming.startTime = minutesToTime(uStartMins - diff);
-          upcoming.endTime = minutesToTime(uEndMins - diff);
-          await upcoming.save();
-        }
+        await shiftUpcomingBookings(booking.salonId, booking.chairId, booking.appointmentDate, originalStartTime, diff);
       }
     } else {
-      // Cancel request
       booking.rescheduleStatus = 'none';
       booking.proposedStartTime = undefined;
       booking.proposedEndTime = undefined;
       await booking.save();
     }
 
-    // Trigger update
-    const updatedSalon = await Salon.findById(booking.salonId);
     if (req.io) {
+      const updatedSalon = await Salon.findById(booking.salonId);
       req.io.emit('queue_updated', { salonId: booking.salonId, newQueueCount: updatedSalon.currentQueue });
     }
 
@@ -447,10 +316,11 @@ router.post('/action-reschedule', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Cancel a booking
-// URL: http://localhost:5000/api/bookings/cancel
+// PUT ROUTE: Cancel a booking
 // ==========================================
-router.post('/cancel', async (req, res) => {
+router.put('/cancel', [
+  body('bookingId').notEmpty().withMessage('bookingId is required')
+], validateRequest, async (req, res) => {
   try {
     const { bookingId } = req.body;
     const booking = await Booking.findByIdAndUpdate(
@@ -460,20 +330,7 @@ router.post('/cancel', async (req, res) => {
     );
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
-    // Decrement queue count
-    const updatedSalon = await Salon.findByIdAndUpdate(
-      booking.salonId,
-      { $inc: { currentQueue: -1 } },
-      { returnDocument: 'after' }
-    );
-    if (updatedSalon.currentQueue < 0) {
-      updatedSalon.currentQueue = 0;
-      await updatedSalon.save();
-    }
-
-    if (req.io) {
-      req.io.emit('queue_updated', { salonId: updatedSalon._id, newQueueCount: updatedSalon.currentQueue });
-    }
+    await decrementQueue(booking.salonId, req.io);
 
     res.status(200).json({ message: 'Booking cancelled successfully.' });
   } catch (error) {
@@ -482,28 +339,34 @@ router.post('/cancel', async (req, res) => {
 });
 
 // ==========================================
-// GET ROUTE: Secure Owner Dashboard Data
-// URL: http://localhost:5000/api/bookings/salon/dashboard
+// GET ROUTE: Secure Owner Dashboard Data (Paginated)
 // ==========================================
 router.get('/salon/dashboard', verifyToken, async (req, res) => {
   try {
-    // 1. req.user.id is the ID of the logged-in salon (stored in the token)
     const salonId = req.user.id; 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    // 2. Find the Salon directly by ID
     const mySalon = await Salon.findById(salonId);
+    if (!mySalon) return res.status(404).json({ message: 'No salon found for this ID.' });
 
-    if (!mySalon) {
-      return res.status(404).json({ message: 'No salon found for this ID.' });
-    }
-
-    // 3. Now search for bookings using the actual Salon ID
     const bookings = await Booking.find({ salonId: mySalon._id })
        .populate('customerId', 'name phone')
-       // Optional: sort by date and time so the queue is in the right order
-       .sort({ appointmentDate: 1, startTime: 1 }); 
+       .sort({ appointmentDate: 1, startTime: 1 })
+       .skip(skip)
+       .limit(limit);
+       
+    const total = await Booking.countDocuments({ salonId: mySalon._id });
 
-    res.json({ bookings: bookings });
+    res.json({ 
+      bookings,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("Dashboard Error:", error);
     res.status(500).json({ message: 'Server error' });
@@ -511,17 +374,31 @@ router.get('/salon/dashboard', verifyToken, async (req, res) => {
 });
 
 // ==========================================
-// GET ROUTE: Public Salon Bookings (Used if needed)
-// URL: http://localhost:5000/api/bookings/salon/:salonId
+// GET ROUTE: Public Salon Bookings (Paginated)
 // ==========================================
 router.get('/salon/:salonId', async (req, res) => {
   try {
     const salonId = req.params.salonId;
-    const bookings = await Booking.find({ salonId: salonId })
-      .populate('customerId', 'name phone')
-      .sort({ appointmentDate: -1, startTime: 1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(bookings);
+    const bookings = await Booking.find({ salonId })
+      .populate('customerId', 'name phone')
+      .sort({ appointmentDate: -1, startTime: 1 })
+      .skip(skip)
+      .limit(limit);
+      
+    const total = await Booking.countDocuments({ salonId });
+
+    res.status(200).json({
+      bookings,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("Error fetching salon bookings:", error);
     res.status(500).json({ message: 'Error fetching salon bookings' });
@@ -529,17 +406,31 @@ router.get('/salon/:salonId', async (req, res) => {
 });
 
 // ==========================================
-// GET ROUTE: Fetch bookings for a specific customer
-// URL: http://localhost:5000/api/bookings/customer/:customerId
+// GET ROUTE: Fetch bookings for a specific customer (Paginated)
 // ==========================================
 router.get('/customer/:customerId', async (req, res) => {
   try {
     const customerId = req.params.customerId;
-    const bookings = await Booking.find({ customerId: customerId })
-      .populate('salonId', 'name address operatingHours ratings images')
-      .sort({ appointmentDate: -1, startTime: 1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(bookings);
+    const bookings = await Booking.find({ customerId })
+      .populate('salonId', 'name address operatingHours ratings images')
+      .sort({ appointmentDate: -1, startTime: 1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Booking.countDocuments({ customerId });
+
+    res.status(200).json({
+      bookings,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("Error fetching customer bookings:", error);
     res.status(500).json({ message: 'Error fetching customer bookings' });

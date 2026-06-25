@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ShieldAlert, Building2, Users, Activity, MapPin, Search, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function SuperAdminPanel() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function SuperAdminPanel() {
     const fetchPlatformData = async () => {
       try {
         const response = await axios.get(`${API_BASE}/salons`);
-        setSalons(response.data);
+        setSalons(Array.isArray(response.data) ? response.data : (response.data.salons || []));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching admin data:", error);

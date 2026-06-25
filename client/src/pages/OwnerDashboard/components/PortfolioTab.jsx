@@ -1,6 +1,6 @@
 import React from 'react';
 import { Camera, Plus } from 'lucide-react';
-import { Card } from './Shared';
+import { Card, ImageDropZone } from './Shared';
 
 export default function PortfolioTab({
   salon,
@@ -84,28 +84,36 @@ export default function PortfolioTab({
             ))}
 
             {(salon?.portfolio || []).length < 10 && (
-              <label htmlFor="portfolio-image-upload" className="relative pb-[100%] border border-dashed border-white/15 rounded-xl flex flex-col items-center justify-center text-white/30 cursor-pointer bg-white/[0.01] hover:border-violet-500/50 hover:text-white transition-colors group">
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-                  <Plus size={24} className="group-hover:scale-110 transition-transform" />
-                  <span className="text-[11px] font-bold uppercase">Add Photo</span>
-                </div>
-                <input id="portfolio-image-upload" name="portfolioImageUpload" type="file" accept="image/*" onChange={handlePortfolioUpload} className="hidden" aria-label="Upload Portfolio Image" />
-              </label>
+              <ImageDropZone 
+                onDropFiles={handlePortfolioUpload}
+                className="relative pb-[100%] border border-dashed border-white/15 rounded-xl flex flex-col items-center justify-center text-white/30 cursor-pointer bg-white/[0.01] hover:border-violet-500/50 hover:text-white transition-colors group overflow-hidden"
+              >
+                <label htmlFor="portfolio-image-upload" className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <Plus size={24} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] font-bold uppercase text-center px-2">Drag & Drop or<br/>Add Photo</span>
+                  </div>
+                  <input id="portfolio-image-upload" name="portfolioImageUpload" type="file" multiple accept="image/*" onChange={handlePortfolioUpload} className="hidden" aria-label="Upload Portfolio Image" />
+                </label>
+              </ImageDropZone>
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center p-[64px_24px] border border-dashed border-white/[0.08] rounded-[14px] bg-white/[0.01]">
+          <ImageDropZone 
+            onDropFiles={handlePortfolioUpload}
+            className="flex flex-col items-center justify-center p-[64px_24px] border border-dashed border-white/[0.08] rounded-[14px] bg-white/[0.01]"
+          >
             <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center text-white/25 mb-4">
               <Camera size={32} />
             </div>
             <h3 className="text-base font-semibold text-white/70 mb-1.5">Showcase Your Craft</h3>
-            <p className="text-[13px] text-white/30 text-center max-w-[300px] leading-[1.5] mb-5">Upload portfolio photos to display your team's signature haircuts and styling work to customers.</p>
+            <p className="text-[13px] text-white/30 text-center max-w-[300px] leading-[1.5] mb-5">Drag & Drop or Upload multiple portfolio photos to display your team's signature haircuts and styling work.</p>
             
             <label htmlFor="portfolio-empty-upload" className="inline-flex items-center gap-2 px-6 py-3 bg-violet-500/10 text-violet-300 border border-violet-500/25 rounded-xl text-sm font-semibold cursor-pointer transition-all duration-150 hover:bg-violet-500/20">
               <Plus size={16} /> Upload Photos
-              <input id="portfolio-empty-upload" name="portfolioEmptyUpload" type="file" accept="image/*" onChange={handlePortfolioUpload} className="hidden" aria-label="Upload Portfolio Image" />
+              <input id="portfolio-empty-upload" name="portfolioEmptyUpload" type="file" multiple accept="image/*" onChange={handlePortfolioUpload} className="hidden" aria-label="Upload Portfolio Image" />
             </label>
-          </div>
+          </ImageDropZone>
         )}
       </Card>
     </div>

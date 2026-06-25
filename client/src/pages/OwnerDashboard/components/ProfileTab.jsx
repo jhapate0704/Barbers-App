@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, Plus, Check } from 'lucide-react';
-import { Card, Label, InputField, PrimaryBtn } from './Shared';
+import { Card, Label, InputField, PrimaryBtn, ImageDropZone } from './Shared';
 
 export default function ProfileTab({
   salon,
@@ -117,9 +117,12 @@ export default function ProfileTab({
               <div className="h-[1px] w-full bg-white/[0.06] my-4" />
 
               {/* Salon Photos (Storefront & Interior) */}
-              <div className="w-full text-left">
-                <span className="text-[10px] font-bold text-white/25 uppercase tracking-[0.08em] block mb-2">Salon Photos ({(salon?.images || []).length}/5)</span>
-                <div className="grid grid-cols-5 gap-1.5 w-full">
+              <ImageDropZone 
+                onDropFiles={handleImageUpload}
+                className="w-full text-left p-2 -m-2 rounded-xl"
+              >
+                <span className="text-[10px] font-bold text-white/25 uppercase tracking-[0.08em] block mb-2 px-2">Salon Photos ({(salon?.images || []).length}/5) - Drag & Drop multiple</span>
+                <div className="grid grid-cols-5 gap-1.5 w-full px-2 pb-2">
                   {(salon?.images || []).map((imgUrl, idx) => (
                     <div key={idx} className="relative pb-[100%] rounded-lg overflow-hidden border border-white/[0.08]">
                       <img src={imgUrl} alt={`Salon storefront ${idx}`} className="absolute top-0 left-0 w-full h-full object-cover" />
@@ -138,11 +141,11 @@ export default function ProfileTab({
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <Plus size={14} />
                       </div>
-                      <input id="salon-storefront-upload" name="salonStorefrontUpload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" aria-label="Upload Storefront Image" />
+                      <input id="salon-storefront-upload" name="salonStorefrontUpload" type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" aria-label="Upload Storefront Image" />
                     </label>
                   )}
                 </div>
-              </div>
+              </ImageDropZone>
             </>
           ) : (
             <form onSubmit={saveProfileDetails} className="w-full flex flex-col gap-3.5 text-left mt-3">

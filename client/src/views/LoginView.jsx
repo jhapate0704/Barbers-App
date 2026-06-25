@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 
 const LoginView = ({ onLoginSuccess }) => {
@@ -99,6 +99,7 @@ const LoginView = ({ onLoginSuccess }) => {
           role: 'customer'
         });
         
+        localStorage.setItem('customerToken', res.data.token);
         localStorage.setItem('customerId', res.data.user._id);
         localStorage.setItem('customerName', res.data.user.name);
         localStorage.setItem('customerAvatar', res.data.user.avatar || '');
@@ -110,6 +111,7 @@ const LoginView = ({ onLoginSuccess }) => {
           password
         });
         
+        localStorage.setItem('customerToken', res.data.token);
         localStorage.setItem('customerId', res.data.user._id);
         localStorage.setItem('customerName', res.data.user.name);
         localStorage.setItem('customerAvatar', res.data.user.avatar || '');

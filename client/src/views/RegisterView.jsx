@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const API_BASE = "http://localhost:5000/api";
-
-
+const API_BASE = import.meta.env.VITE_API_URL;
+import SalonMap from '../components/SalonMap';
+import LocationPickerModal from '../components/LocationPickerModal';
 const RegisterView = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -48,22 +48,42 @@ const RegisterView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showWizardPassword, setShowWizardPassword] = useState(false);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
 
-  const MOCK_ADDRESSES = [
-    "123 Beauty Lane, New York, NY 10001",
-    "456 Grooming Blvd, Los Angeles, CA 90001",
-    "789 Styling St, London, EC1A 1BB",
-    "101 Haircut Way, Mumbai, MH 400001",
-    "202 Precision Rd, Bangalore, KA 560001"
-  ];
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 
-  const filteredSuggestions = MOCK_ADDRESSES.filter(addr =>
-    addr.toLowerCase().includes(addressSearchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (addressSearchQuery.length > 2 && addressSearchQuery !== formData.selectedAddressText) {
+        const query = `${addressSearchQuery}${formData.country ? ', ' + formData.country : ''}`;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`)
+          .then(res => res.json())
+          .then(data => setFilteredSuggestions(data || []))
+          .catch(console.error);
+      } else {
+        setFilteredSuggestions([]);
+      }
+    }, 500);
 
-  const handleSelectSuggestion = (addr) => {
-    setFormData(prev => ({ ...prev, selectedAddressText: addr }));
-    setAddressSearchQuery(addr);
+    return () => clearTimeout(delayDebounceFn);
+  }, [addressSearchQuery, formData.country, formData.selectedAddressText]);
+
+  const handleSelectSuggestion = (sug) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      selectedAddressText: sug.display_name,
+      latitude: parseFloat(sug.lat),
+      longitude: parseFloat(sug.lon),
+      addressDetails: {
+        ...prev.addressDetails,
+        street: sug.address?.road || sug.address?.pedestrian || '',
+        city: sug.address?.city || sug.address?.town || sug.address?.village || '',
+        state: sug.address?.state || sug.address?.county || '',
+        postcode: sug.address?.postcode || '',
+        country: sug.address?.country || ''
+      }
+    }));
+    setAddressSearchQuery(sug.display_name);
     setShowSuggestions(false);
   };
 
@@ -97,12 +117,20 @@ const RegisterView = () => {
           }));
           
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
             const data = await res.json();
             if (data && data.display_name) {
               setFormData(prev => ({
                 ...prev,
-                selectedAddressText: data.display_name
+                selectedAddressText: data.display_name,
+                addressDetails: {
+                  ...prev.addressDetails,
+                  street: data.address?.road || data.address?.pedestrian || '',
+                  city: data.address?.city || data.address?.town || data.address?.village || '',
+                  state: data.address?.state || data.address?.county || '',
+                  postcode: data.address?.postcode || '',
+                  country: data.address?.country || ''
+                }
               }));
               setAddressSearchQuery(data.display_name);
             } else {
@@ -144,7 +172,8 @@ const RegisterView = () => {
 
       if (!finalLat || !finalLng) {
         try {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.selectedAddressText)}&limit=1`);
+          const searchQuery = `${formData.selectedAddressText}${formData.country ? ', ' + formData.country : ''}`;
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
           const geoData = await geoRes.json();
           if (geoData && geoData.length > 0) {
             finalLat = parseFloat(geoData[0].lat);
@@ -506,14 +535,24 @@ const RegisterView = () => {
           {!formData.selectedAddressText ? (
             /* State 1: Search View */
             <div className="space-y-4 relative">
-              <button
-                type="button"
-                onClick={detectMyLocation}
-                className="w-full py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-50/40 text-indigo-600 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer bg-white"
-              >
-                <MapPin size={14} className="text-indigo-500 animate-pulse" />
-                Use My Current GPS Position
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={detectMyLocation}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-50/40 text-indigo-600 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer bg-white"
+                >
+                  <MapPin size={14} className="text-indigo-500 animate-pulse" />
+                  Add Current Location
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLocationPickerOpen(true)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-50/40 text-indigo-600 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer bg-white"
+                >
+                  <Map size={14} className="text-indigo-500" />
+                  Select on Map
+                </button>
+              </div>
 
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -528,27 +567,27 @@ const RegisterView = () => {
                   onFocus={() => setShowSuggestions(true)}
                   className="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:border-indigo-500 focus:bg-white outline-none transition-all font-semibold"
                 />
-              </div>
 
-              {showSuggestions && addressSearchQuery && (
-                <div className="absolute left-0 right-0 top-14 bg-white border border-gray-150 rounded-2xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100 max-h-56 overflow-y-auto">
-                  {filteredSuggestions.map((addr, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => handleSelectSuggestion(addr)}
-                      className="p-3.5 text-xs text-gray-700 hover:bg-indigo-50/40 cursor-pointer font-semibold transition-colors flex items-center gap-2"
-                    >
-                      <MapPin size={14} className="text-indigo-500 shrink-0" />
-                      {addr}
-                    </div>
-                  ))}
-                  {filteredSuggestions.length === 0 && (
-                    <div className="p-4 text-center text-xs text-gray-400 font-medium">
-                      No results found. Feel free to type custom text.
-                    </div>
-                  )}
-                </div>
-              )}
+                {showSuggestions && addressSearchQuery && (
+                  <div className="absolute left-0 right-0 top-[100%] mt-2 bg-white border border-gray-150 rounded-2xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100 max-h-56 overflow-y-auto">
+                    {filteredSuggestions.map((sug, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => handleSelectSuggestion(sug)}
+                        className="p-3.5 text-xs text-gray-700 hover:bg-indigo-50/40 cursor-pointer font-semibold transition-colors flex items-center gap-2"
+                      >
+                        <MapPin size={14} className="text-indigo-500 shrink-0" />
+                        {sug.display_name}
+                      </div>
+                    ))}
+                    {filteredSuggestions.length === 0 && addressSearchQuery.length > 2 && (
+                      <div className="p-4 text-center text-xs text-gray-400 font-medium">
+                        No results found. Feel free to type custom text.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Back-up input directly if no suggestion chosen */}
               {addressSearchQuery && (
@@ -566,26 +605,20 @@ const RegisterView = () => {
           ) : (
             /* State 2: Map View */
             <div className="space-y-6">
-              {/* Mock Map div */}
-              <div className="w-full h-64 bg-slate-100 rounded-3xl border border-gray-200 relative flex items-center justify-center overflow-hidden shadow-inner">
-                {/* Background Grid Pattern */}
-                <div className="absolute inset-0 opacity-15" style={{ 
-                  backgroundImage: 'radial-gradient(#4f46e5 1.5px, transparent 1.5px)', 
-                  backgroundSize: '16px 16px' 
-                }} />
+              {/* Map div */}
+              <div className="relative">
+                <SalonMap 
+                  latitude={formData.latitude} 
+                  longitude={formData.longitude} 
+                  address={formData.selectedAddressText} 
+                  salonName={formData.businessName || 'Your Salon'} 
+                  hideDirections={true}
+                />
                 
-                {/* Bouncy pin */}
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="animate-bounce mb-2">
-                    <MapPin size={36} className="text-indigo-600 fill-indigo-200" />
-                  </div>
-                  <div className="w-4 h-1.5 bg-black/10 rounded-full animate-pulse blur-xs" />
-                </div>
-
                 {/* Edit details pencil button */}
                 <button 
                   onClick={() => setIsAddressModalOpen(true)}
-                  className="absolute top-4 right-4 bg-slate-900/90 text-white rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 hover:bg-black transition-all active:scale-95 shadow-md border-none outline-none cursor-pointer"
+                  className="absolute top-4 right-4 bg-slate-900/90 text-white rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 hover:bg-black transition-all active:scale-95 shadow-md border-none outline-none cursor-pointer z-10"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>
                   Edit details
@@ -747,6 +780,32 @@ const RegisterView = () => {
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider animate-pulse">Preparing your dashboard...</p>
         </div>
       )}
+
+      {/* LOCATION PICKER MODAL */}
+      <LocationPickerModal 
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        onLocationSelect={(data) => {
+          setFormData(prev => ({
+            ...prev,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            selectedAddressText: data.address,
+            addressDetails: {
+              ...prev.addressDetails,
+              street: data.addressDetails?.road || data.addressDetails?.pedestrian || '',
+              city: data.addressDetails?.city || data.addressDetails?.town || data.addressDetails?.village || '',
+              state: data.addressDetails?.state || data.addressDetails?.county || '',
+              postcode: data.addressDetails?.postcode || '',
+              country: data.addressDetails?.country || ''
+            }
+          }));
+          setAddressSearchQuery(data.address);
+          setShowSuggestions(false);
+        }}
+        initialLat={formData.latitude}
+        initialLng={formData.longitude}
+      />
     </div>
   );
 };

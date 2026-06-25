@@ -20,8 +20,8 @@ import SettingsTab from './OwnerDashboard/components/SettingsTab';
 import HelpTab from './OwnerDashboard/components/HelpTab';
 import Modals from './OwnerDashboard/components/Modals';
 
-const API_BASE = "http://localhost:5000/api";
-const socket = io("http://localhost:5000");
+const API_BASE = import.meta.env.VITE_API_URL;
+const socket = io(import.meta.env.VITE_SOCKET_URL);
 
 export default function OwnerDashboard() {
   const navigate = useNavigate();
@@ -78,7 +78,8 @@ export default function OwnerDashboard() {
         axios.get(`${API_BASE}/salons`)
       ]);
       const id = localStorage.getItem('salonId');
-      const s = Array.isArray(sRes.data) ? sRes.data.find(x => String(x._id) === String(id)) : null;
+      const salonsArray = Array.isArray(sRes.data) ? sRes.data : (sRes.data.salons || []);
+      const s = salonsArray.find(x => String(x._id) === String(id)) || null;
       if (s) {
         setSalon(s);
         setCfg(p => ({ ...p, openTime: s.operatingHours?.open || '', closeTime: s.operatingHours?.close || '', weeklyOffDay: s.weeklyOffDay ?? -1, isOffToday: !!s.isOffToday }));
@@ -142,8 +143,8 @@ export default function OwnerDashboard() {
     return Object.values(customersMap).sort((a, b) => b.totalVisits - a.totalVisits);
   }, [data.history, data.liveQueue]);
 
-  const completeBooking = async id => { try { await axios.post(`${API_BASE}/bookings/complete`, { bookingId: id }); fetchData(); } catch (_) {} };
-  const cancelBooking  = async id => { if (!window.confirm('Cancel?')) return; try { await axios.post(`${API_BASE}/bookings/cancel`, { bookingId: id }); fetchData(); } catch (_) {} };
+  const completeBooking = async id => { try { await axios.put(`${API_BASE}/bookings/complete`, { bookingId: id }); fetchData(); } catch (_) {} };
+  const cancelBooking  = async id => { if (!window.confirm('Cancel?')) return; try { await axios.put(`${API_BASE}/bookings/cancel`, { bookingId: id }); fetchData(); } catch (_) {} };
   
   const openEarlyComplete = (booking) => {
     setEarlyCompleteBooking(booking);
@@ -182,7 +183,7 @@ export default function OwnerDashboard() {
     e.preventDefault();
     if (!earlyCompleteBooking || !earlyEndTime) return;
     try {
-      await axios.post(`${API_BASE}/bookings/complete-early`, {
+      await axios.put(`${API_BASE}/bookings/complete-early`, {
         bookingId: earlyCompleteBooking._id,
         actualEndTime: earlyEndTime,
         shiftType: shiftType
@@ -197,7 +198,7 @@ export default function OwnerDashboard() {
 
   const handleRescheduleAction = async (bookingId, action) => {
     try {
-      await axios.post(`${API_BASE}/bookings/action-reschedule`, { bookingId, action });
+      await axios.put(`${API_BASE}/bookings/action-reschedule`, { bookingId, action });
       fetchData();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update reschedule action.');
@@ -208,7 +209,7 @@ export default function OwnerDashboard() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE}/salons/settings/update`, { operatingHours: { open: cfg.openTime, close: cfg.closeTime }, weeklyOffDay: +cfg.weeklyOffDay, isOffToday: cfg.isOffToday }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.patch(`${API_BASE}/salons/settings/update`, { operatingHours: { open: cfg.openTime, close: cfg.closeTime }, weeklyOffDay: +cfg.weeklyOffDay, isOffToday: cfg.isOffToday }, { headers: { Authorization: `Bearer ${token}` } });
       alert('Saved!'); fetchData();
     } catch (_) { alert('Failed'); }
   };
@@ -218,14 +219,14 @@ export default function OwnerDashboard() {
     const token = localStorage.getItem('token');
     try { await axios.post(`${API_BASE}/salons/chairs/add`, { name: cfg.newChairName }, { headers: { Authorization: `Bearer ${token}` } }); setCfg(c => ({ ...c, newChairName: '' })); fetchData(); } catch (_) {}
   };
-  const delChair = async id => { if (!window.confirm('Delete?')) return; const token = localStorage.getItem('token'); try { await axios.post(`${API_BASE}/salons/chairs/delete`, { chairId: id }, { headers: { Authorization: `Bearer ${token}` } }); fetchData(); } catch (_) {} };
+  const delChair = async id => { if (!window.confirm('Delete?')) return; const token = localStorage.getItem('token'); try { await axios.delete(`${API_BASE}/salons/chairs/${id}`, { headers: { Authorization: `Bearer ${token}` } }); fetchData(); } catch (_) {} };
 
   const addService = async () => {
     if (!cfg.newServiceName || !cfg.newServicePrice) return;
     const token = localStorage.getItem('token');
     try { await axios.post(`${API_BASE}/salons/services/add`, { name: cfg.newServiceName, price: +cfg.newServicePrice, duration: +(cfg.newServiceDuration || 30) }, { headers: { Authorization: `Bearer ${token}` } }); setCfg(c => ({ ...c, newServiceName: '', newServicePrice: '', newServiceDuration: '' })); fetchData(); } catch (_) {}
   };
-  const delService = async id => { if (!window.confirm('Delete?')) return; const token = localStorage.getItem('token'); try { await axios.post(`${API_BASE}/salons/services/delete`, { serviceId: id }, { headers: { Authorization: `Bearer ${token}` } }); fetchData(); } catch (_) {} };
+  const delService = async id => { if (!window.confirm('Delete?')) return; const token = localStorage.getItem('token'); try { await axios.delete(`${API_BASE}/salons/services/${id}`, { headers: { Authorization: `Bearer ${token}` } }); fetchData(); } catch (_) {} };
 
   const addWalkin = async e => {
     e.preventDefault();
@@ -236,38 +237,56 @@ export default function OwnerDashboard() {
     } catch (err) { alert(err.response?.data?.message || 'Failed'); }
   };
 
-  const saveNotes = async () => { try { await axios.post(`${API_BASE}/users/notes/update`, { userId: selectedCustomer._id, notes: customerNotes }); alert('Saved!'); fetchData(); } catch (_) {} };
+  const saveNotes = async () => { try { const token = localStorage.getItem('token'); await axios.put(`${API_BASE}/users/notes/update`, { userId: selectedCustomer._id, notes: customerNotes }, { headers: { Authorization: `Bearer ${token}` } }); alert('Saved!'); fetchData(); } catch (_) {} };
   const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('salonId'); navigate('/login'); };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be smaller than 2MB");
-      return;
-    }
+    let files;
+    if (e.target && e.target.files) files = e.target.files;
+    else if (e.dataTransfer && e.dataTransfer.files) files = e.dataTransfer.files;
+    else files = e; // Assuming array of files or FileList
+    if (!files || files.length === 0) return;
+
+    const filesArray = Array.from(files);
     const currentImages = salon?.images || [];
-    if (currentImages.length >= 5) {
-      alert("You can upload a maximum of 5 images.");
+    if (currentImages.length + filesArray.length > 5) {
+      alert(`You can upload a maximum of 5 images. You currently have ${currentImages.length}.`);
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      try {
-        const base64String = reader.result;
-        const updatedImages = [...currentImages, base64String];
-        const token = localStorage.getItem('token');
-        await axios.post(
-          `${API_BASE}/salons/settings/update`, 
-          { images: updatedImages }, 
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        fetchData();
-      } catch (err) {
-        alert("Failed to upload image");
+
+    const newBase64Images = [];
+    const errors = [];
+    for (const file of filesArray) {
+      if (file.size > 2 * 1024 * 1024) {
+        errors.push(`${file.name} (exceeds 2MB)`);
+        continue;
       }
-    };
-    reader.readAsDataURL(file);
+      const base64String = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+      newBase64Images.push(base64String);
+    }
+
+    if (errors.length > 0) {
+      alert(`The following images were skipped:\n${errors.join('\n')}`);
+    }
+
+    if (newBase64Images.length === 0) return;
+
+    try {
+      const updatedImages = [...currentImages, ...newBase64Images];
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_BASE}/salons/settings/update`, 
+        { images: updatedImages }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchData();
+    } catch (err) {
+      alert("Failed to upload images");
+    }
   };
 
   const handleDeleteImage = async (indexToDelete) => {
@@ -276,7 +295,7 @@ export default function OwnerDashboard() {
       const currentImages = salon?.images || [];
       const updatedImages = currentImages.filter((_, idx) => idx !== indexToDelete);
       const token = localStorage.getItem('token');
-      await axios.post(
+      await axios.patch(
         `${API_BASE}/salons/settings/update`, 
         { images: updatedImages }, 
         { headers: { Authorization: `Bearer ${token}` } }
@@ -288,66 +307,83 @@ export default function OwnerDashboard() {
   };
 
   const handlePortfolioUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    let files;
+    if (e.target && e.target.files) files = e.target.files;
+    else if (e.dataTransfer && e.dataTransfer.files) files = e.dataTransfer.files;
+    else files = e; 
+    if (!files || files.length === 0) return;
     
-    if (file.size > 15 * 1024 * 1024) {
-      alert("Image is too large. Please select an image under 15MB.");
-      return;
-    }
-    
+    const filesArray = Array.from(files);
     const currentPortfolio = salon?.portfolio || [];
-    if (currentPortfolio.length >= 10) {
-      alert("You can upload a maximum of 10 images in your portfolio.");
+    if (currentPortfolio.length + filesArray.length > 10) {
+      alert(`You can upload a maximum of 10 images in your portfolio. You currently have ${currentPortfolio.length}.`);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = async () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1080;
-        const MAX_HEIGHT = 1080;
-        let width = img.width;
-        let height = img.height;
+    const newBase64Images = [];
+    const errors = [];
+    for (const file of filesArray) {
+      if (file.size > 15 * 1024 * 1024) {
+        errors.push(`${file.name} (exceeds 15MB)`);
+        continue;
+      }
+      
+      const compressedBase64 = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1080;
+            const MAX_HEIGHT = 1080;
+            let width = img.width;
+            let height = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      newBase64Images.push(compressedBase64);
+    }
+
+    if (errors.length > 0) {
+      alert(`The following images were skipped:\n${errors.join('\n')}`);
+    }
+
+    if (newBase64Images.length === 0) return;
         
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-        
-        try {
-          const updatedPortfolio = [...currentPortfolio, compressedBase64];
-          const token = localStorage.getItem('token');
-          await axios.post(
-            `${API_BASE}/salons/settings/update`, 
-            { portfolio: updatedPortfolio }, 
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          fetchData();
-        } catch (err) {
-          console.error("Upload error:", err);
-          alert("Failed to upload image.");
-        }
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const updatedPortfolio = [...currentPortfolio, ...newBase64Images];
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_BASE}/salons/settings/update`, 
+        { portfolio: updatedPortfolio }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchData();
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload images.");
+    }
   };
 
   const handleSaveAbout = async (e) => {
@@ -355,7 +391,7 @@ export default function OwnerDashboard() {
     try {
       const token = localStorage.getItem('token');
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.post(`${API_BASE}/salons/settings/update`, { about: aboutFormText }, auth);
+      await axios.patch(`${API_BASE}/salons/settings/update`, { about: aboutFormText }, auth);
       setSalon(prev => ({ ...prev, about: aboutFormText }));
       setIsEditingAbout(false);
       fetchData();
@@ -370,7 +406,7 @@ export default function OwnerDashboard() {
       const currentPortfolio = salon?.portfolio || [];
       const updatedPortfolio = currentPortfolio.filter((_, idx) => idx !== indexToDelete);
       const token = localStorage.getItem('token');
-      await axios.post(
+      await axios.patch(
         `${API_BASE}/salons/settings/update`, 
         { portfolio: updatedPortfolio }, 
         { headers: { Authorization: `Bearer ${token}` } }
@@ -391,7 +427,8 @@ export default function OwnerDashboard() {
       let finalLng = null;
       
       try {
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(profileForm.address)}&limit=1`);
+        const searchQuery = `${profileForm.address}${salon?.country ? ', ' + salon.country : ''}`;
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
         const geoData = await geoRes.json();
         if (geoData && geoData.length > 0) {
           finalLat = parseFloat(geoData[0].lat);
@@ -401,7 +438,7 @@ export default function OwnerDashboard() {
         console.error("Geocoding failed inside dashboard settings:", ge);
       }
 
-      await axios.post(`${API_BASE}/salons/settings/update`, {
+      await axios.patch(`${API_BASE}/salons/settings/update`, {
         ownerName: profileForm.ownerName,
         address: profileForm.address,
         latitude: finalLat || undefined,
@@ -420,7 +457,7 @@ export default function OwnerDashboard() {
     try {
       const token = localStorage.getItem('token');
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.post(`${API_BASE}/salons/settings/update`, {
+      await axios.patch(`${API_BASE}/salons/settings/update`, {
         ownerName: contactForm.ownerName,
         phone: contactForm.phone,
         email: contactForm.email
@@ -433,6 +470,22 @@ export default function OwnerDashboard() {
     }
   };
 
+  const handleMapLocationUpdate = async (lat, lng, address) => {
+    try {
+      const token = localStorage.getItem('token');
+      const auth = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.patch(`${API_BASE}/salons/settings/update`, {
+        latitude: lat,
+        longitude: lng,
+        address: address || salon?.address
+      }, auth);
+      fetchData();
+      alert('Map location updated successfully!');
+    } catch (err) {
+      alert('Error updating map location');
+    }
+  };
+
   const handleUpdateLocation = () => {
     if (navigator.geolocation) {
       alert("Acquiring location...");
@@ -442,7 +495,7 @@ export default function OwnerDashboard() {
           try {
             const token = localStorage.getItem('token');
             const auth = { headers: { Authorization: `Bearer ${token}` } };
-            await axios.post(`${API_BASE}/salons/settings/update`, {
+            await axios.patch(`${API_BASE}/salons/settings/update`, {
               latitude,
               longitude
             }, auth);
@@ -467,7 +520,7 @@ export default function OwnerDashboard() {
       try {
         const token = localStorage.getItem('token');
         const auth = { headers: { Authorization: `Bearer ${token}` } };
-        await axios.post(`${API_BASE}/salons/settings/update`, {
+        await axios.patch(`${API_BASE}/salons/settings/update`, {
           latitude: null,
           longitude: null
         }, auth);
@@ -508,7 +561,7 @@ export default function OwnerDashboard() {
     try {
       const token = localStorage.getItem('token');
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.post(`${API_BASE}/salons/settings/password/update`, {
+      await axios.patch(`${API_BASE}/salons/settings/password/update`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       }, auth);
@@ -525,13 +578,13 @@ export default function OwnerDashboard() {
   };
 
   const toggleSalonVisibility = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const auth = { headers: { Authorization: `Bearer ${token}` } };
-      const nextIsOffToday = !cfg.isOffToday;
-      await axios.post(`${API_BASE}/salons/settings/update`, {
-        isOffToday: nextIsOffToday
-      }, auth);
+      try {
+        const token = localStorage.getItem('token');
+        const auth = { headers: { Authorization: `Bearer ${token}` } };
+        const nextIsOffToday = !cfg.isOffToday;
+        await axios.patch(`${API_BASE}/salons/settings/update`, {
+          isOffToday: nextIsOffToday
+        }, auth);
       setCfg(prev => ({ ...prev, isOffToday: nextIsOffToday }));
       fetchData();
     } catch (err) {
@@ -652,7 +705,7 @@ export default function OwnerDashboard() {
           {activeTab === 'services' && <ServicesTab salon={salon} cfg={cfg} setCfg={setCfg} addService={addService} delService={delService} />}
           {activeTab === 'history' && <HistoryTab data={data} historyDateFilter={historyDateFilter} setHistoryDateFilter={setHistoryDateFilter} historySearchQuery={historySearchQuery} setHistorySearchQuery={setHistorySearchQuery} />}
           {activeTab === 'customers' && <CustomersTab customerRecords={customerRecords} customerSearchQuery={customerSearchQuery} setCustomerSearchQuery={setCustomerSearchQuery} customerTab={customerTab} setCustomerTab={setCustomerTab} />}
-          {activeTab === 'config' && <ConfigTab salon={salon} cfg={cfg} setCfg={setCfg} saveSettings={saveSettings} handleUpdateLocation={handleUpdateLocation} handleDeleteLocation={handleDeleteLocation} />}
+          {activeTab === 'config' && <ConfigTab salon={salon} cfg={cfg} setCfg={setCfg} saveSettings={saveSettings} handleUpdateLocation={handleUpdateLocation} handleDeleteLocation={handleDeleteLocation} handleMapLocationUpdate={handleMapLocationUpdate} />}
           {activeTab === 'profile' && <ProfileTab salon={salon} profileForm={profileForm} setProfileForm={setProfileForm} isEditingProfile={isEditingProfile} setIsEditingProfile={setIsEditingProfile} saveProfileDetails={saveProfileDetails} handleImageUpload={handleImageUpload} handleDeleteImage={handleDeleteImage} aboutFormText={aboutFormText} setAboutFormText={setAboutFormText} isEditingAbout={isEditingAbout} setIsEditingAbout={setIsEditingAbout} handleSaveAbout={handleSaveAbout} />}
           {activeTab === 'portfolio' && <PortfolioTab salon={salon} handlePortfolioUpload={handlePortfolioUpload} handleDeletePortfolioImage={handleDeletePortfolioImage} aboutFormText={aboutFormText} setAboutFormText={setAboutFormText} isEditingAbout={isEditingAbout} setIsEditingAbout={setIsEditingAbout} handleSaveAbout={handleSaveAbout} />}
           {activeTab === 'settings' && <SettingsTab salon={salon} contactForm={contactForm} setContactForm={setContactForm} isEditingContact={isEditingContact} setIsEditingContact={setIsEditingContact} saveContactDetails={saveContactDetails} passwordForm={passwordForm} setPasswordForm={setPasswordForm} passwordStep={passwordStep} setPasswordStep={setPasswordStep} passwordError={passwordError} setPasswordError={setPasswordError} passwordSuccess={passwordSuccess} setPasswordSuccess={setPasswordSuccess} showCurrentPassword={showCurrentPassword} setShowCurrentPassword={setShowCurrentPassword} showNewPassword={showNewPassword} setShowNewPassword={setShowNewPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} handleVerifyCurrentPassword={handleVerifyCurrentPassword} handleChangePassword={handleChangePassword} passwordFormOpen={passwordFormOpen} setPasswordFormOpen={setPasswordFormOpen} deleteConfirmOpen={deleteConfirmOpen} setDeleteConfirmOpen={setDeleteConfirmOpen} handleDeleteAccount={handleDeleteAccount} cfg={cfg} toggleSalonVisibility={toggleSalonVisibility} />}

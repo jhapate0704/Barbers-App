@@ -7,6 +7,8 @@ const { uploadToCloudinary } = require('../utils/cloudinary.js');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const verifyToken = require('../middleware/auth.js');
+const { body, validationResult } = require('express-validator');
+const salonService = require('../services/salon_service.js');
 
 // ==========================================
 // POST ROUTE: Register a new salon
@@ -90,39 +92,10 @@ router.post('/register', async (req, res) => {
 // ==========================================
 router.get('/', async (req, res) => {
   try {
-    const salons = await Salon.find().lean();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Fetch all scheduled bookings from today onwards in a single query (O(1) database queries)
-    const todaysBookings = await Booking.find({
-      appointmentDate: { $gte: today },
-      status: 'scheduled'
-    }).sort({ startTime: 1 }).lean();
-
-    // Group bookings by salonId in-memory
-    const bookingsBySalon = {};
-    for (const booking of todaysBookings) {
-      const sId = String(booking.salonId);
-      if (!bookingsBySalon[sId]) {
-        bookingsBySalon[sId] = [];
-      }
-      bookingsBySalon[sId].push(booking);
-    }
-
-    // Map bookings back to their respective salons
-    const salonsWithRush = salons.map((salon) => {
-      const salonBookings = bookingsBySalon[String(salon._id)] || [];
-      const busyTimes = salonBookings.map(b => `${b.startTime} - ${b.endTime}`);
-
-      return { 
-        ...salon, 
-        currentQueue: salonBookings.length,
-        busyTimes: busyTimes
-      };
-    });
-
-    res.status(200).json(salonsWithRush);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await salonService.getSalonsWithRush(page, limit);
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching salons:", error);
     res.status(500).json({ message: 'Error fetching salons' });
@@ -135,7 +108,7 @@ router.get('/', async (req, res) => {
 // ==========================================
 router.get('/nearby', async (req, res) => {
   try {
-    const { lat, lng, radius } = req.query;
+    const { lat, lng, radius, page, limit } = req.query;
     if (!lat || !lng) {
       return res.status(400).json({ message: 'Latitude and Longitude are required query parameters.' });
     }
@@ -143,66 +116,11 @@ router.get('/nearby', async (req, res) => {
     const latitude = Number(lat);
     const longitude = Number(lng);
     const radiusInMeters = Number(radius) || 10000; // default 10 km
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
 
-    // Find salons near the coordinates (returns sorted by distance)
-    const salons = await Salon.find({
-      location: {
-        $nearSphere: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [longitude, latitude] // [lng, lat]
-          },
-          $maxDistance: radiusInMeters
-        }
-      }
-    }).lean();
-
-    // Fetch live rush counts and bookings like the main route
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todaysBookings = await Booking.find({
-      appointmentDate: { $gte: today },
-      status: 'scheduled'
-    }).sort({ startTime: 1 }).lean();
-
-    const bookingsBySalon = {};
-    for (const booking of todaysBookings) {
-      const sId = String(booking.salonId);
-      if (!bookingsBySalon[sId]) {
-        bookingsBySalon[sId] = [];
-      }
-      bookingsBySalon[sId].push(booking);
-    }
-
-    const salonsWithRush = salons.map((salon) => {
-      const salonBookings = bookingsBySalon[String(salon._id)] || [];
-      const busyTimes = salonBookings.map(b => `${b.startTime} - ${b.endTime}`);
-
-      // Calculate distance in meters using Haversine formula
-      let distanceMeters = null;
-      if (salon.latitude && salon.longitude) {
-        const R = 6371e3; // Earth radius in meters
-        const φ1 = (latitude * Math.PI) / 180;
-        const φ2 = (salon.latitude * Math.PI) / 180;
-        const Δφ = ((salon.latitude - latitude) * Math.PI) / 180;
-        const Δλ = ((salon.longitude - longitude) * Math.PI) / 180;
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        distanceMeters = R * c;
-      }
-
-      return { 
-        ...salon, 
-        currentQueue: salonBookings.length,
-        busyTimes: busyTimes,
-        distance: distanceMeters
-      };
-    });
-
-    res.status(200).json(salonsWithRush);
+    const result = await salonService.getNearbySalonsWithRush(latitude, longitude, radiusInMeters, pageNum, limitNum);
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching nearby salons:", error);
     res.status(500).json({ message: 'Error searching nearby salons' });
@@ -238,9 +156,9 @@ router.post('/login', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Update Salon Settings
+// PATCH ROUTE: Update Salon Settings
 // ==========================================
-router.post('/settings/update', verifyToken, async (req, res) => {
+router.patch('/settings/update', verifyToken, async (req, res) => {
   try {
     const { 
       name, ownerName, email, phone, country, address,
@@ -287,30 +205,12 @@ router.post('/settings/update', verifyToken, async (req, res) => {
     }
 
     if (targetImages !== undefined) {
-      const uploadedUrls = [];
-      for (const img of targetImages) {
-        if (img.startsWith('data:image')) {
-          const secureUrl = await uploadToCloudinary(img);
-          uploadedUrls.push(secureUrl);
-        } else {
-          uploadedUrls.push(img);
-        }
-      }
-      updateData.images = uploadedUrls;
+      updateData.images = await salonService.uploadImages(targetImages);
     }
 
     // Process portfolio images using Cloudinary
     if (portfolio !== undefined) {
-      const uploadedPortfolioUrls = [];
-      for (const img of portfolio) {
-        if (img.startsWith('data:image')) {
-          const secureUrl = await uploadToCloudinary(img);
-          uploadedPortfolioUrls.push(secureUrl);
-        } else {
-          uploadedPortfolioUrls.push(img);
-        }
-      }
-      updateData.portfolio = uploadedPortfolioUrls;
+      updateData.portfolio = await salonService.uploadImages(portfolio);
     }
 
     const salon = await Salon.findByIdAndUpdate(
@@ -337,7 +237,11 @@ router.post('/settings/update', verifyToken, async (req, res) => {
 // ==========================================
 // POST ROUTE: Add a Chair
 // ==========================================
-router.post('/chairs/add', verifyToken, async (req, res) => {
+router.post('/chairs/add', verifyToken, [
+  body('name').notEmpty().withMessage('Chair name is required').trim()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   try {
     const { name } = req.body;
     const salon = await Salon.findById(req.user.id);
@@ -350,11 +254,11 @@ router.post('/chairs/add', verifyToken, async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Delete a Chair
+// DELETE ROUTE: Delete a Chair
 // ==========================================
-router.post('/chairs/delete', verifyToken, async (req, res) => {
+router.delete('/chairs/:chairId', verifyToken, async (req, res) => {
   try {
-    const { chairId } = req.body;
+    const { chairId } = req.params;
     const salon = await Salon.findById(req.user.id);
     salon.chairs = salon.chairs.filter(c => String(c._id) !== String(chairId));
     await salon.save();
@@ -367,7 +271,13 @@ router.post('/chairs/delete', verifyToken, async (req, res) => {
 // ==========================================
 // POST ROUTE: Add a Service
 // ==========================================
-router.post('/services/add', verifyToken, async (req, res) => {
+router.post('/services/add', verifyToken, [
+  body('name').notEmpty().withMessage('Service name is required').trim(),
+  body('duration').isNumeric().withMessage('Duration must be a number'),
+  body('price').isNumeric().withMessage('Price must be a number')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   try {
     const { name, duration, price } = req.body;
     const salon = await Salon.findById(req.user.id);
@@ -380,11 +290,11 @@ router.post('/services/add', verifyToken, async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Delete a Service
+// DELETE ROUTE: Delete a Service
 // ==========================================
-router.post('/services/delete', verifyToken, async (req, res) => {
+router.delete('/services/:serviceId', verifyToken, async (req, res) => {
   try {
-    const { serviceId } = req.body;
+    const { serviceId } = req.params;
     const salon = await Salon.findById(req.user.id);
     salon.services = salon.services.filter(s => String(s._id) !== String(serviceId));
     await salon.save();
@@ -452,9 +362,9 @@ router.post('/settings/password/verify', verifyToken, async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Verify and Update Password
+// PATCH ROUTE: Verify and Update Password
 // ==========================================
-router.post('/settings/password/update', verifyToken, async (req, res) => {
+router.patch('/settings/password/update', verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {

@@ -64,3 +64,52 @@ export const ModalClose = ({ onClick }) => (
     <X size={15} />
   </button>
 );
+
+export const ImageDropZone = ({ onDropFiles, children, className = '' }) => {
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (onDropFiles) {
+      if (e.dataTransfer && e.dataTransfer.files) {
+        onDropFiles(e.dataTransfer.files);
+      }
+    }
+  };
+
+  return (
+    <div
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`transition-all duration-200 ${
+        isDragging ? 'border-violet-500 bg-violet-500/10' : ''
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+

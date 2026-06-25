@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user_models.js'); // Import the blueprint
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+const verifyToken = require('../middleware/auth.js');
 
 // POST ROUTE: Check if email exists
 // URL: http://localhost:5000/api/users/check-email
@@ -21,14 +24,19 @@ router.post('/check-email', async (req, res) => {
 
 // POST ROUTE: Register a new user (Customer or Salon Owner)
 // URL: http://localhost:5000/api/users/register
-router.post('/register', async (req, res) => {
+router.post('/register', [
+  body('name').notEmpty().withMessage('Name is required'),
+  body('email').notEmpty().withMessage('Email is required').isEmail().withMessage('Valid email is required'),
+  body('password').notEmpty().withMessage('Password is required').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     // 1. Grab the data sent from the frontend
     const { name, email, phone, password, country, role } = req.body;
-
-    if (!name) {
-      return res.status(400).json({ message: 'Name is required' });
-    }
 
     // 2. Check if a user with this email or phone already exists
     if (email) {
@@ -66,9 +74,11 @@ router.post('/register', async (req, res) => {
     const savedUser = await newUser.save();
 
     // 6. Send a success response back to the frontend
+    const token = jwt.sign({ id: savedUser._id, role: savedUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       message: 'User created successfully!',
-      user: savedUser
+      user: savedUser,
+      token
     });
 
   } catch (error) {
@@ -103,9 +113,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Password is required to log in.' });
     }
     
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(200).json({
       message: 'Logged in successfully',
-      user
+      user,
+      token
     });
   } catch (error) {
     console.error("Error logging in:", error);
@@ -117,7 +129,9 @@ router.post('/login', async (req, res) => {
 // URL: http://localhost:5000/api/users
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find().select('-password'); // Fetches everyone in the DB
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = parseInt(req.query.skip) || 0;
+    const users = await User.find().select('-password').limit(limit).skip(skip); // Fetches everyone in the DB
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -138,8 +152,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST ROUTE: Update User Notes (CRM)
-router.post('/notes/update', async (req, res) => {
+// PUT ROUTE: Update User Notes (CRM)
+router.put('/notes/update', verifyToken, async (req, res) => {
   try {
     const { userId, notes } = req.body;
     const user = await User.findByIdAndUpdate(userId, { notes }, { returnDocument: 'after' });
@@ -150,11 +164,20 @@ router.post('/notes/update', async (req, res) => {
 });
 
 // ==========================================
-// POST ROUTE: Update Customer Profile & Settings
+// PUT ROUTE: Update Customer Profile & Settings
 // URL: http://localhost:5000/api/users/profile/update
 // ==========================================
-router.post('/profile/update', async (req, res) => {
+router.put('/profile/update', verifyToken, [
+  body('userId').notEmpty().withMessage('User ID is required'),
+  body('email').optional().isEmail().withMessage('Valid email is required'),
+  body('newPassword').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const {
       userId,
       name,

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 import SalonCard from '../components/SalonCard';
 import SalonCarousel from '../components/SalonCarousel';
@@ -51,8 +51,9 @@ const MarketplaceView = ({ salons, onBook }) => {
         setNearbyMessage('Finding nearby salons...');
         try {
           const response = await axios.get(`${API_BASE}/salons/nearby?lat=${latitude}&lng=${longitude}`);
-          setNearbySalons(Array.isArray(response.data) ? response.data : []);
-          setNearbyMessage(`Salons near you (${response.data.length} found)`);
+          const fetchedSalons = Array.isArray(response.data) ? response.data : (response.data.salons || []);
+          setNearbySalons(fetchedSalons);
+          setNearbyMessage(`Salons near you (${fetchedSalons.length} found)`);
         } catch (err) {
           console.error("Error fetching nearby salons:", err);
           setNearbyMessage('Failed to find nearby salons');

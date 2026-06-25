@@ -28,8 +28,8 @@ import LoginView from './views/LoginView';
 import RegisterView from './views/RegisterView';
 import Footer from './components/Footer';
 
-const API_BASE = "http://localhost:5000/api";
-const socket = io("http://localhost:5000");
+const API_BASE = import.meta.env.VITE_API_URL;
+const socket = io(import.meta.env.VITE_SOCKET_URL);
 
 export default function App() {
   const navigate = useNavigate();
@@ -95,7 +95,7 @@ export default function App() {
 
   useEffect(() => {
     axios.get(`${API_BASE}/salons`).then(res => {
-      setSalons(Array.isArray(res.data) ? res.data : []);
+      setSalons(Array.isArray(res.data) ? res.data : (res.data.salons || []));
     }).catch(() => {});
     const onUpdate = (data) => setSalons(prev => prev.map(s => s._id === data.salonId ? { ...s, currentQueue: data.newQueueCount } : s));
     socket.on('queue_updated', onUpdate);

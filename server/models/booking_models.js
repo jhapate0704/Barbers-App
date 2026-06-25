@@ -5,15 +5,18 @@ const bookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true,
   },
   salonId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Salon',
     required: true,
+    index: true,
   },
   chairId: {
     type: mongoose.Schema.Types.ObjectId, // Connects to a specific chair in the Salon
     required: true,
+    index: true,
   },
   chairName: {
     type: String, // Store the name directly for easier display
@@ -29,6 +32,7 @@ const bookingSchema = new mongoose.Schema({
   appointmentDate: {
     type: Date,
     required: true,
+    index: true,
   },
   startTime: {
     type: String, // e.g., "10:00"

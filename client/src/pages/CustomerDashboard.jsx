@@ -13,8 +13,8 @@ import HistoryTab from './CustomerDashboard/HistoryTab';
 import ProfileTab from './CustomerDashboard/ProfileTab';
 import RateModal from './CustomerDashboard/RateModal';
 
-const API_BASE = "http://localhost:5000/api";
-const socket = io("http://localhost:5000");
+const API_BASE = import.meta.env.VITE_API_URL;
+const socket = io(import.meta.env.VITE_SOCKET_URL);
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE}/bookings/customer/${customerId}`);
-      const fetchedBookings = Array.isArray(res.data) ? res.data : [];
+      const fetchedBookings = Array.isArray(res.data.bookings) ? res.data.bookings : (Array.isArray(res.data) ? res.data : []);
       setBookings(fetchedBookings);
       calculateQueuePositions(fetchedBookings);
       setLoading(false);
@@ -98,8 +98,9 @@ export default function CustomerDashboard() {
         const salonIdVal = booking.salonId?._id || booking.salonId;
         if (!salonIdVal) continue;
         const res = await axios.get(`${API_BASE}/bookings/salon/${salonIdVal}`);
-        if (Array.isArray(res.data)) {
-          const chairBookingsToday = res.data.filter(b => {
+        const chairBookingsRaw = Array.isArray(res.data.bookings) ? res.data.bookings : (Array.isArray(res.data) ? res.data : []);
+        if (chairBookingsRaw.length > 0) {
+          const chairBookingsToday = chairBookingsRaw.filter(b => {
             if (!b.appointmentDate) return false;
             const d = new Date(b.appointmentDate);
             if (isNaN(d.getTime())) return false;
@@ -123,7 +124,7 @@ export default function CustomerDashboard() {
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     try {
-      await axios.post(`${API_BASE}/bookings/cancel`, { bookingId });
+      await axios.put(`${API_BASE}/bookings/cancel`, { bookingId });
       fetchBookings();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to cancel appointment');
@@ -132,7 +133,7 @@ export default function CustomerDashboard() {
 
   const handleRescheduleResponse = async (bookingId, response) => {
     try {
-      await axios.post(`${API_BASE}/bookings/respond-reschedule`, { bookingId, response });
+      await axios.put(`${API_BASE}/bookings/respond-reschedule`, { bookingId, response });
       fetchBookings();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update reschedule choice.');
