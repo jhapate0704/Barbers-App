@@ -29,7 +29,7 @@ const SalonMap = ({ latitude, longitude, address, salonName }) => {
       mapInstanceRef.current = map;
 
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+          
       }).addTo(map);
 
       const marker = window.L.marker([lat, lng]).addTo(map);
