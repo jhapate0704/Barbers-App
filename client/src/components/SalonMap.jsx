@@ -1,3 +1,9 @@
+/**
+ * SalonMap Component
+ * 
+ * Integrates a map view to show multiple salon locations geographically.
+ * Allows users to visually see where nearby barbers are located.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -88,3 +94,4 @@ const SalonMap = ({ latitude, longitude, address, salonName, hideDirections }) =
 };
 
 export default SalonMap;
+

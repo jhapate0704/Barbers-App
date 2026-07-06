@@ -1,3 +1,9 @@
+/**
+ * ProtectedRoute Component
+ * 
+ * This component ensures that only authenticated users (typically Salon Owners) can access
+ * specific dashboard routes. Unauthorized users are redirected to the login screen.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -20,3 +26,4 @@ const ProtectedRoute = ({ children }) => {
 
 
 export default ProtectedRoute;
+

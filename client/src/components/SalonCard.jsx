@@ -1,3 +1,9 @@
+/**
+ * SalonCard Component
+ * 
+ * A reusable card component that displays summary information for a single salon.
+ * Shows the salon image, name, rating, location, and a 'Book' button.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -115,3 +121,4 @@ const SalonCard = ({ salon, onBook }) => {
 
 
 export default SalonCard;
+

@@ -1,3 +1,9 @@
+/**
+ * CustomerRoute Component
+ * 
+ * This component protects routes that should only be accessed by logged-in customers.
+ * If a user is not a customer, they are redirected to the login page.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -20,3 +26,4 @@ const CustomerRoute = ({ children }) => {
 
 
 export default CustomerRoute;
+

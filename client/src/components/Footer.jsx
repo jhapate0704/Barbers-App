@@ -1,3 +1,9 @@
+/**
+ * Footer Component
+ * 
+ * The standard footer displayed at the bottom of the main application pages.
+ * It typically contains copyright info, social links, and secondary navigation.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -99,3 +105,4 @@ const Footer = () => {
 // ==========================================
 
 export default Footer;
+

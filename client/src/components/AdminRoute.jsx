@@ -1,3 +1,9 @@
+/**
+ * AdminRoute Component
+ * 
+ * This is a High-Order Component (HOC) used for protecting routes that should only be accessible
+ * by Super Admin users. It checks the user's role and redirects them if they don't have permission.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -20,3 +26,4 @@ const AdminRoute = ({ children }) => {
 
 
 export default AdminRoute;
+

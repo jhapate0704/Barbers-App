@@ -1,3 +1,9 @@
+/**
+ * CustomerProfileModal Component
+ * 
+ * A modal (popup) dialog that allows customers to view and edit their personal profile
+ * details such as name, avatar, and contact information.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -267,3 +273,4 @@ const CustomerProfileModal = ({ isOpen, onClose, customerId, onProfileUpdated })
 // ==========================================
 
 export default CustomerProfileModal;
+

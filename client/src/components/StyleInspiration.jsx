@@ -1,3 +1,9 @@
+/**
+ * StyleInspiration Component
+ * 
+ * A visual gallery component that displays trendy haircuts and styles
+ * to give customers ideas before they make a booking.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -63,3 +69,4 @@ const StyleInspiration = ({ salons, onBook }) => {
 
 
 export default StyleInspiration;
+

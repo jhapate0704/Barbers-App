@@ -1,3 +1,9 @@
+/**
+ * LocationPickerModal Component
+ * 
+ * A modal that provides an interactive map for users or salon owners to pin their exact
+ * geographical location for accurate search and directions.
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Search, Check } from 'lucide-react';
 
@@ -174,3 +180,4 @@ const LocationPickerModal = ({ isOpen, onClose, onLocationSelect, initialLat, in
 };
 
 export default LocationPickerModal;
+

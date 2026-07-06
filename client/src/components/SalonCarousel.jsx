@@ -1,3 +1,9 @@
+/**
+ * SalonCarousel Component
+ * 
+ * A horizontal scrolling list (carousel) of SalonCards. Used to display
+ * categories like 'Trending Salons' or 'New Salons' on the marketplace view.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -53,3 +59,4 @@ const SalonCarousel = ({ title, salons, onBook }) => {
 
 
 export default SalonCarousel;
+

@@ -1,3 +1,9 @@
+/**
+ * DrumColumn Component
+ * 
+ * A specialized UI component resembling a drum interface, often used for selecting time slots
+ * or scrolling through sequential options in a booking flow.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -119,3 +125,4 @@ const DrumColumn = ({ options, value, onChange }) => {
 
 
 export default DrumColumn;
+

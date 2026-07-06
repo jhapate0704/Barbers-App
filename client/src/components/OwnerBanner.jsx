@@ -1,3 +1,9 @@
+/**
+ * OwnerBanner Component
+ * 
+ * A call-to-action banner specifically targeted at salon owners.
+ * It encourages barbers and business owners to list their business on TrimSync.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -55,3 +61,4 @@ const OwnerBanner = () => {
 
 
 export default OwnerBanner;
+

@@ -1,3 +1,9 @@
+/**
+ * HowItWorks Component
+ * 
+ * A presentational section used on the landing page to explain the 3-step process
+ * of how customers can use the platform to find and book a barber.
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -50,3 +56,4 @@ const HowItWorks = () => {
 
 
 export default HowItWorks;
+
