@@ -195,7 +195,7 @@ export default function App() {
           customerAvatar={customerAvatar} 
         />
       )} 
-      <div className={`flex-1 ${hideNavbar ? "" : "p-4 md:p-6"}`}>
+      <div className={`flex-1 ${hideNavbar ? "" : "px-4 md:px-6 pt-24 pb-20 md:pb-10"}`}>
         <Routes>
           <Route path="/" element={<MarketplaceView salons={salons} onBook={handleBook} />} />
           <Route path="/book" element={<BookingView selectedSalon={selectedSalon} selectedServices={selectedServices} toggleService={s => setSelectedServices(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])} selectedChair={selectedChair} setSelectedChair={setSelectedChair} appointmentDate={appointmentDate} setAppointmentDate={setAppointmentDate} startTime={startTime} setStartTime={setStartTime} onSubmit={submitBooking} message={bookingMessage} />} />
