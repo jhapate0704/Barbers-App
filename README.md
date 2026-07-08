@@ -367,13 +367,13 @@ Distributed under the **ISC** License. See `package.json` for more information.
 
 ## 📞 Contact Information
 
-- **Name:** [Your Name / Update if needed]
-- **Email:** [Your Email / Update if needed]
-- **Project Link:** [Update if needed]
+- **Name:** Niraj Jhapate
+- **Email:** nirajjahapate1@gmail.com
+
 
 ## 🌐 Social Links
-- [LinkedIn](#) *(Update if needed)*
-- [Twitter](#) *(Update if needed)*
+- [LinkedIn](#) https://www.linkedin.com/in/niraj-jhapate-669474299
+  
 
 ## 🧑‍💻 Author Information
 
