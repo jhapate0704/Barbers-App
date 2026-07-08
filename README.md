@@ -377,7 +377,7 @@ Distributed under the **ISC** License. See `package.json` for more information.
 
 ## 🧑‍💻 Author Information
 
-Created by **[Your Name/Team Placeholder]** as a modern solution to the age-old barber waiting line problem.
+Created by **Niraj Jhapate** as a modern solution to the age-old barber waiting line problem.
 
 ## 💬 Support
 
