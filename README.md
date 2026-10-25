@@ -15,7 +15,6 @@ TrimSync is a full-stack, real-time marketplace and management platform designed
 
 By eliminating the wait times and optimizing scheduling, TrimSync breathes fresh air into the salon and barbershop industry.
 
-## 🌐 Live Demo
 
 
 ## 📸 Screenshots
