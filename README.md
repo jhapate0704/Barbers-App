@@ -17,7 +17,6 @@ By eliminating the wait times and optimizing scheduling, TrimSync breathes fresh
 
 ## 🌐 Live Demo
 
-> **[Live Demo Link: Update if needed]** (e.g., https://trimsync.example.com)
 
 ## 📸 Screenshots
 
